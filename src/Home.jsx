@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FileText, Plus, ChevronRight, CheckCircle2, Circle, X, Trash2, Download, Edit3, LayoutGrid, List } from 'lucide-react';
 import Dialog from './Dialog';
 import Onboarding from './Onboarding';
-
 function Home() {
   const [docs, setDocs] = useState([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -13,15 +12,12 @@ function Home() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const navigate = useNavigate();
   const timerRef = useRef(null);
-
   const closeDialog = () => setDialogConfig(prev => ({ ...prev, isOpen: false }));
-
   const toggleViewMode = () => {
     const newMode = viewMode === 'list' ? 'grid' : 'list';
     setViewMode(newMode);
     localStorage.setItem('readmeMaker_viewMode', newMode);
   };
-
   const stripMarkdown = (md) => {
     if (!md) return '';
     return md
@@ -29,27 +25,22 @@ function Home() {
       .replace(/\s+/g, ' ')
       .trim();
   };
-
   useEffect(() => {
     loadDocs();
-    
     const hasOnboarded = localStorage.getItem('mdnotes_onboarded');
     if (!hasOnboarded) {
       setShowOnboarding(true);
     }
   }, []);
-
   const handleOnboardingComplete = () => {
     localStorage.setItem('mdnotes_onboarded', 'true');
     setShowOnboarding(false);
   };
-
   const loadDocs = () => {
     const savedDocs = JSON.parse(localStorage.getItem('readmeMaker_docs') || '[]');
     savedDocs.sort((a, b) => b.lastModified - a.lastModified);
     setDocs(savedDocs);
   };
-
   const handlePointerDown = (id) => {
     timerRef.current = setTimeout(() => {
       setIsSelectionMode(true);
@@ -57,16 +48,14 @@ function Home() {
       if (window.navigator && window.navigator.vibrate) {
         window.navigator.vibrate(50);
       }
-    }, 450); // 450ms long press
+    }, 450); 
   };
-
   const cancelLongPress = () => {
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
     }
   };
-
   const toggleSelection = (id) => {
     setSelectedIds(prev => {
       const newSet = new Set(prev);
@@ -79,7 +68,6 @@ function Home() {
       return newSet;
     });
   };
-
   const handleItemClick = (e, id) => {
     e.preventDefault();
     if (isSelectionMode) {
@@ -88,7 +76,6 @@ function Home() {
       navigate(`/editor/${id}`);
     }
   };
-
   const handleDelete = () => {
     setDialogConfig({
       isOpen: true,
@@ -104,7 +91,6 @@ function Home() {
       }
     });
   };
-
   const handleDownload = () => {
     selectedIds.forEach(id => {
       const doc = docs.find(d => d.id === id);
@@ -123,7 +109,6 @@ function Home() {
     setIsSelectionMode(false);
     setSelectedIds(new Set());
   };
-
   const handleRename = () => {
     const id = Array.from(selectedIds)[0];
     const doc = docs.find(d => d.id === id);
@@ -148,15 +133,11 @@ function Home() {
       setSelectedIds(new Set());
     }
   };
-
   return (
     <div className="h-screen w-full flex flex-col relative overflow-hidden bg-transparent">
-      
       {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
-      
       <Dialog {...dialogConfig} onCancel={closeDialog} />
-
-      {/* Top Blur Fade Effect */}
+      {}
       <div 
         className="absolute top-0 left-0 right-0 h-[280px] z-20 pointer-events-none"
         style={{
@@ -166,8 +147,7 @@ function Home() {
            maskImage: 'linear-gradient(to bottom, black 241px, transparent 100%)'
         }}
       />
-      
-      {/* Top Header - Fixed App Typography */}
+      {}
       <div className="absolute top-0 left-0 right-0 z-30 pointer-events-none">
         <header className="pt-16 pb-4 px-8 flex flex-col items-start max-w-2xl mx-auto w-full pointer-events-auto">
           <h1 className="text-4xl font-serif text-black mb-2 tracking-tight">
@@ -181,8 +161,7 @@ function Home() {
           )}
         </header>
       </div>
-
-      {/* History List styled as a Table of Contents */}
+      {}
       <main className="flex-1 overflow-auto px-6 z-10 no-scrollbar pb-32 pt-[290px] max-w-2xl mx-auto w-full">
         {docs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center px-4 opacity-50">
@@ -195,9 +174,7 @@ function Home() {
             <div className={viewMode === 'list' ? "border-t border-[#e5e5e0]" : "contents"}>
               {docs.map(doc => {
                 const isSelected = selectedIds.has(doc.id);
-                
                 if (viewMode === 'grid') {
-                  // Grid View Item
                   return (
                     <div 
                       key={doc.id} 
@@ -208,14 +185,13 @@ function Home() {
                       onClick={(e) => handleItemClick(e, doc.id)}
                       className={`break-inside-avoid mb-3 relative flex flex-col border border-[#e5e5e0] rounded-2xl overflow-hidden transition-colors cursor-pointer select-none ${isSelected ? 'bg-[#ebebe5] border-[#999]' : 'bg-[#fcfcfc] active:bg-[#ebebe5]'}`}
                     >
-                      {/* Clean Text Preview */}
+                      {}
                       <div className="p-3.5 pointer-events-none">
                         <p className="text-[12.5px] font-serif leading-[1.6] text-[#555] break-words line-clamp-5">
                           {stripMarkdown(doc.content) || 'Empty document'}
                         </p>
                       </div>
-                      
-                      {/* Footer Details */}
+                      {}
                       <div className="flex-shrink-0 bg-white border-t border-[#f0f0ea] p-3 pointer-events-none flex items-center justify-between">
                         <div className="flex-1 overflow-hidden pr-2">
                           <h3 className="text-[13px] font-serif font-medium text-[#111] mb-0.5 truncate">
@@ -232,8 +208,6 @@ function Home() {
                     </div>
                   );
                 }
-
-                // List View Item
                 return (
                   <div 
                     key={doc.id} 
@@ -264,8 +238,7 @@ function Home() {
           </div>
         )}
       </main>
-
-      {/* Floating Action Button / Selection Capsule */}
+      {}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center">
         <div 
           className={`flex items-center justify-center transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden shadow-xl shadow-black/20 ${
@@ -290,7 +263,6 @@ function Home() {
               >
                 <X size={18} strokeWidth={1.5} />
               </button>
-              
               <div className="flex items-center gap-1">
                 <button 
                   onClick={toggleViewMode}
@@ -299,7 +271,6 @@ function Home() {
                 >
                   {viewMode === 'list' ? <LayoutGrid size={18} strokeWidth={1.5} /> : <List size={18} strokeWidth={1.5} />}
                 </button>
-                
                 {selectedIds.size === 1 && (
                   <button 
                     onClick={handleRename}
@@ -308,14 +279,12 @@ function Home() {
                     <Edit3 size={18} strokeWidth={1.5} />
                   </button>
                 )}
-                
                 <button 
                   onClick={handleDownload}
                   className="p-2.5 rounded-full hover:bg-white/10 transition-colors flex items-center justify-center text-[#ddd] hover:text-white shrink-0 active:scale-95"
                 >
                   <Download size={18} strokeWidth={1.5} />
                 </button>
-                
                 <button 
                   onClick={handleDelete}
                   className="p-2.5 rounded-full hover:bg-red-500/20 text-red-400 transition-colors flex items-center justify-center shrink-0 active:scale-95"
@@ -330,5 +299,4 @@ function Home() {
     </div>
   );
 }
-
 export default Home;

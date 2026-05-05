@@ -1,33 +1,26 @@
 import React, { useState } from 'react';
 import { Edit3, Eye } from 'lucide-react';
-
 function CodeOutput({ markdown, setMarkdown, editor }) {
   const [isEditing, setIsEditing] = useState(false);
-
   const handleChange = (e) => {
     const newVal = e.target.value;
     setMarkdown(newVal);
-    
     if (editor) {
-      // Parse markdown to JSON explicitly to avoid HTML fallback issues that strip newlines
       const jsonContent = editor.storage.markdown.manager.parse(newVal);
       editor.commands.setContent(jsonContent, false);
     }
   };
-
   return (
     <div className="flex-1 overflow-hidden flex flex-col relative bg-transparent">
-      {/* Segmented Button for Mobile */}
+      {}
       <div className="p-4 flex justify-center flex-shrink-0 z-10 border-b border-[#e5e5e0] mb-4">
         <div className="relative flex items-center bg-[#e0e0dc] rounded-full w-full max-w-xs shadow-inner p-1">
-          
-          {/* Sliding Background Pill */}
+          {}
           <div 
             className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white rounded-full shadow-sm transition-transform duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] ${
               isEditing ? 'translate-x-full' : 'translate-x-0'
             }`}
           />
-
           <button 
             onClick={() => setIsEditing(false)}
             className={`relative z-10 flex-1 flex items-center justify-center gap-2 py-2 text-sm font-sans font-medium rounded-full transition-colors duration-300 ${!isEditing ? 'text-black' : 'text-[#666] hover:text-black'}`}
@@ -42,7 +35,6 @@ function CodeOutput({ markdown, setMarkdown, editor }) {
           </button>
         </div>
       </div>
-
       <div className="flex-1 overflow-auto px-6 pb-40 custom-scrollbar flex flex-col">
         {isEditing ? (
           <textarea
@@ -61,5 +53,4 @@ function CodeOutput({ markdown, setMarkdown, editor }) {
     </div>
   );
 }
-
 export default CodeOutput;

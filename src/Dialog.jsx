@@ -1,38 +1,29 @@
 import React, { useState, useEffect } from 'react';
-
 function Dialog({ isOpen, title, message, type = 'prompt', defaultValue = '', onConfirm, onCancel }) {
   const [inputValue, setInputValue] = useState(defaultValue);
-
-  // Update input value when dialog opens or default changes
   useEffect(() => {
     if (isOpen) {
       setInputValue(defaultValue);
     }
   }, [defaultValue, isOpen]);
-
   if (!isOpen) return null;
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
+      {}
       <div 
         className="absolute inset-0 bg-[#f4f4f0]/60 backdrop-blur-sm fade-in transition-opacity" 
         onClick={onCancel} 
       />
-      
-      {/* Modal Container */}
+      {}
       <div className="relative bg-white rounded-[2rem] shadow-2xl shadow-black/10 w-full max-w-sm p-6 fade-in border border-[#e5e5e0]">
-        
         <h3 className="text-xl font-serif text-[#111] mb-2 tracking-tight">
           {title}
         </h3>
-        
         {message && (
           <p className="text-[15px] text-[#666] mb-5 font-serif italic leading-relaxed">
             {message}
           </p>
         )}
-        
         {type === 'prompt' && (
           <input 
             type="text" 
@@ -50,8 +41,7 @@ function Dialog({ isOpen, title, message, type = 'prompt', defaultValue = '', on
             }}
           />
         )}
-
-        {/* Actions */}
+        {}
         <div className="flex justify-end gap-2 mt-4">
           <button 
             onClick={onCancel} 
@@ -59,7 +49,6 @@ function Dialog({ isOpen, title, message, type = 'prompt', defaultValue = '', on
           >
             Cancel
           </button>
-          
           <button 
             onClick={() => {
               onConfirm(type === 'prompt' ? inputValue : true);
@@ -70,10 +59,8 @@ function Dialog({ isOpen, title, message, type = 'prompt', defaultValue = '', on
             {type === 'prompt' ? 'Save' : 'Confirm'}
           </button>
         </div>
-        
       </div>
     </div>
   );
 }
-
 export default Dialog;

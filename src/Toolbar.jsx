@@ -6,16 +6,12 @@ import {
   List, ListOrdered, CheckSquare 
 } from 'lucide-react';
 import Dialog from './Dialog';
-
 function Toolbar({ editor }) {
   const [dialogConfig, setDialogConfig] = useState({ isOpen: false });
-
   if (!editor) {
     return null;
   }
-
   const closeDialog = () => setDialogConfig(prev => ({ ...prev, isOpen: false }));
-
   const setLink = () => {
     const previousUrl = editor.getAttributes('link').href;
     setDialogConfig({
@@ -33,7 +29,6 @@ function Toolbar({ editor }) {
       }
     });
   };
-
   const setImage = () => {
     setDialogConfig({
       isOpen: true,
@@ -47,7 +42,6 @@ function Toolbar({ editor }) {
       }
     });
   };
-
   const tools = [
     { icon: <Heading1 size={20} />, label: 'Heading 1', isActive: editor.isActive('heading', { level: 1 }), action: () => editor.chain().focus().toggleHeading({ level: 1 }).run() },
     { icon: <Heading2 size={20} />, label: 'Heading 2', isActive: editor.isActive('heading', { level: 2 }), action: () => editor.chain().focus().toggleHeading({ level: 2 }).run() },
@@ -67,7 +61,6 @@ function Toolbar({ editor }) {
     { icon: <ListOrdered size={20} />, label: 'Ordered List', isActive: editor.isActive('orderedList'), action: () => editor.chain().focus().toggleOrderedList().run() },
     { icon: <CheckSquare size={20} />, label: 'Task List', isActive: editor.isActive('taskList'), action: () => editor.chain().focus().toggleTaskList().run() },
   ];
-
   return (
     <>
       <Dialog {...dialogConfig} onCancel={closeDialog} />
@@ -76,7 +69,6 @@ function Toolbar({ editor }) {
           if (tool.divider) {
             return <div key={index} className="w-[1px] h-5 bg-[#444] mx-1.5 flex-shrink-0" />;
           }
-          
           return (
             <button
               key={index}
@@ -97,5 +89,4 @@ function Toolbar({ editor }) {
     </>
   );
 }
-
 export default Toolbar;

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { ChevronRight, ChevronLeft, Check, X, MousePointer2, LayoutGrid, FileText, Sparkles } from 'lucide-react';
-
 const steps = [
   {
     title: "Welcome to MD-Notes",
@@ -33,10 +32,8 @@ const steps = [
     color: "bg-yellow-50"
   }
 ];
-
 export default function Onboarding({ onComplete }) {
   const [currentStep, setCurrentStep] = useState(0);
-
   const next = () => {
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
@@ -44,32 +41,26 @@ export default function Onboarding({ onComplete }) {
       onComplete();
     }
   };
-
   const back = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
     }
   };
-
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/40 backdrop-blur-md fade-in">
       <div className="relative w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-[#e5e5e0]">
-        
-        {/* Step Content */}
+        {}
         <div className="p-10 flex flex-col items-center text-center">
           <div className={`w-24 h-24 ${steps[currentStep].color} rounded-3xl flex items-center justify-center mb-8 animate-bounce-subtle`}>
             {steps[currentStep].icon}
           </div>
-          
           <h2 className="text-2xl font-serif text-black mb-4 tracking-tight">
             {steps[currentStep].title}
           </h2>
-          
           <p className="text-[16px] font-serif text-[#666] leading-relaxed mb-10 italic">
             {steps[currentStep].description}
           </p>
-          
-          {/* Progress Indicators */}
+          {}
           <div className="flex gap-2 mb-10">
             {steps.map((_, i) => (
               <div 
@@ -78,8 +69,7 @@ export default function Onboarding({ onComplete }) {
               />
             ))}
           </div>
-          
-          {/* Navigation */}
+          {}
           <div className="flex items-center justify-between w-full">
             <button 
               onClick={back}
@@ -87,7 +77,6 @@ export default function Onboarding({ onComplete }) {
             >
               <ChevronLeft size={24} />
             </button>
-            
             <button 
               onClick={next}
               className="px-8 py-3.5 bg-black text-white rounded-full font-sans font-medium hover:bg-[#333] transition-all flex items-center gap-2 active:scale-95 shadow-lg shadow-black/10"
@@ -97,8 +86,7 @@ export default function Onboarding({ onComplete }) {
             </button>
           </div>
         </div>
-
-        {/* Skip Button */}
+        {}
         <button 
           onClick={onComplete}
           className="absolute top-6 right-6 p-2 text-[#aaa] hover:text-black transition-colors"
