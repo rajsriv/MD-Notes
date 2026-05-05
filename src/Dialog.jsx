@@ -26,12 +26,12 @@ function Dialog({ isOpen, title, message, type = 'prompt', defaultValue = '', on
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-24 md:pt-32 pointer-events-none">
       <div 
-        className="absolute inset-0 bg-[#f4f4f0]/60 backdrop-blur-sm fade-in transition-opacity" 
+        className="absolute inset-0 bg-[#f4f4f0]/40 backdrop-blur-[2px] fade-in transition-opacity pointer-events-auto" 
         onClick={onCancel} 
       />
-      <div className="relative bg-white rounded-[2rem] shadow-2xl shadow-black/10 w-full max-w-sm p-6 fade-in border border-[#e5e5e0]">
+      <div className="relative bg-white rounded-[2rem] shadow-2xl shadow-black/10 w-full max-w-sm p-6 fade-in border border-[#e5e5e0] pointer-events-auto">
         <h3 className="text-xl font-serif text-[#111] mb-2 tracking-tight">
           {title}
         </h3>
