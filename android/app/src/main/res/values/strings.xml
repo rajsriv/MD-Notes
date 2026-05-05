@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MD-Notes</string>
+    <string name="title_activity_main">MD-Notes</string>
+    <string name="package_name">com.raj.mdnotes</string>
+    <string name="custom_url_scheme">com.raj.mdnotes</string>
+</resources>
