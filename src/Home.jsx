@@ -92,20 +92,31 @@ function Home({ currentTheme, onToggleTheme }) {
     });
   };
   const handleDownload = () => {
-    selectedIds.forEach(id => {
+    const idsToDownload = Array.from(selectedIds);
+    
+    idsToDownload.forEach((id, index) => {
       const doc = docs.find(d => d.id === id);
       if (doc) {
-        const blob = new Blob([doc.content], { type: 'text/markdown' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${doc.title || 'Untitled'}.md`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        // Stagger downloads to prevent browser blocking
+        setTimeout(() => {
+          const blob = new Blob([doc.content], { type: 'text/markdown' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${doc.title || 'Untitled'}.md`;
+          document.body.appendChild(a);
+          a.click();
+          
+          // Cleanup
+          setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          }, 100);
+        }, index * 200); // 200ms delay between each file
       }
     });
+
+    // Reset selection after starting the process
     setIsSelectionMode(false);
     setSelectedIds(new Set());
   };

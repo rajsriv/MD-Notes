@@ -132,15 +132,22 @@ function Editor({ currentTheme, onToggleTheme }) {
     }
   };
   const handleDownload = () => {
-    const blob = new Blob([markdown], { type: 'text/markdown' });
+    const content = editor ? editor.getMarkdown() : markdown;
+    if (!content) return;
+
+    const blob = new Blob([content], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'README.md';
+    a.download = `${title || 'README'}.md`;
     document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    
+    // Cleanup
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
   };
   return (
     <div className="h-screen w-full flex flex-col bg-[var(--bg-color)] transition-colors duration-300 text-[#111] dark:text-[#eee] overflow-hidden relative selection:bg-orange-100 dark:selection:bg-blue-900/30">
