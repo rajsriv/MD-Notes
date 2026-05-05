@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FileText, Plus, ChevronRight, CheckCircle2, Circle, X, Trash2, Download, Edit3, LayoutGrid, List } from 'lucide-react';
+import { FileText, Plus, ChevronRight, CheckCircle2, Circle, X, Trash2, Download, Edit3, LayoutGrid, List, CheckSquare } from 'lucide-react';
 import Dialog from './Dialog';
 import Onboarding from './Onboarding';
 function Home() {
