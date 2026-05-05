@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FileText, Plus, ChevronRight, CheckCircle2, Circle, X, Trash2, Download, Edit3, LayoutGrid, List, CheckSquare } from 'lucide-react';
+import { FileText, Plus, ChevronRight, CheckCircle2, Circle, X, Trash2, Download, Edit3, LayoutGrid, List, CheckSquare, Sun, Moon } from 'lucide-react';
 import Dialog from './Dialog';
 import Onboarding from './Onboarding';
 function Home() {
@@ -10,6 +10,22 @@ function Home() {
   const [dialogConfig, setDialogConfig] = useState({ isOpen: false });
   const [viewMode, setViewMode] = useState(localStorage.getItem('readmeMaker_viewMode') || 'list');
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem('mdnotes_theme');
+    if (saved) return saved;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
+
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('mdnotes_theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
   const navigate = useNavigate();
   const timerRef = useRef(null);
   const closeDialog = () => setDialogConfig(prev => ({ ...prev, isOpen: false }));
@@ -142,9 +158,9 @@ function Home() {
       <Dialog {...dialogConfig} onCancel={closeDialog} />
       
       <div 
-        className="absolute top-0 left-0 right-0 h-[280px] z-20 pointer-events-none"
+        className="absolute top-0 left-0 right-0 h-[280px] z-20 pointer-events-none transition-colors duration-300"
         style={{
-           background: 'linear-gradient(to bottom, rgba(244, 244, 240, 0.98) 241px, rgba(244, 244, 240, 0) 100%)',
+           background: 'linear-gradient(to bottom, var(--bg-color) 241px, transparent 100%)',
            backdropFilter: 'blur(12px)',
            WebkitMaskImage: 'linear-gradient(to bottom, black 241px, transparent 100%)',
            maskImage: 'linear-gradient(to bottom, black 241px, transparent 100%)'
@@ -153,14 +169,14 @@ function Home() {
       
       <div className="absolute top-0 left-0 right-0 z-30 pointer-events-none">
         <header className="pt-16 pb-4 px-8 flex flex-col items-start max-w-2xl mx-auto w-full pointer-events-auto">
-          <h1 className="text-4xl font-serif text-black mb-2 tracking-tight">
+          <h1 className="text-4xl font-serif text-black dark:text-white mb-2 tracking-tight">
             MD-Notes
           </h1>
-          <p className="text-[16px] font-serif text-[#666] italic text-left max-w-[280px] leading-relaxed mb-8">
+          <p className="text-[16px] font-serif text-[#666] dark:text-[#999] italic text-left max-w-[280px] leading-relaxed mb-8">
             Craft perfect Markdown documentation right from your device.
           </p>
           {docs.length > 0 && (
-            <h2 className="text-xs font-sans font-semibold text-[#888] uppercase tracking-widest px-2">What went down in History?</h2>
+            <h2 className="text-xs font-sans font-semibold text-[#888] dark:text-[#666] uppercase tracking-widest px-2">What went down in History?</h2>
           )}
         </header>
       </div>
@@ -169,12 +185,12 @@ function Home() {
         {docs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center px-4 opacity-50">
             <FileText size={48} className="text-[#999] mb-4" strokeWidth={1} />
-            <p className="text-[#333] font-serif text-lg">Your library is empty.</p>
-            <p className="text-[#666] font-serif text-sm mt-2 italic">Tap the menu button to begin writing.</p>
+            <p className="text-[#333] dark:text-[#eee] font-serif text-lg">Your library is empty.</p>
+            <p className="text-[#666] dark:text-[#999] font-serif text-sm mt-2 italic">Tap the menu button to begin writing.</p>
           </div>
         ) : (
           <div className={viewMode === 'grid' ? "columns-2 gap-3 px-1 pt-4 pb-8" : "flex flex-col"}>
-            <div className={viewMode === 'list' ? "border-t border-[#e5e5e0]" : "contents"}>
+            <div className={viewMode === 'list' ? "border-t border-[#e5e5e0] dark:border-[#333]" : "contents"}>
               {docs.map(doc => {
                 const isSelected = selectedIds.has(doc.id);
                 if (viewMode === 'grid') {
@@ -186,19 +202,19 @@ function Home() {
                       onPointerLeave={cancelLongPress}
                       onPointerMove={cancelLongPress}
                       onClick={(e) => handleItemClick(e, doc.id)}
-                      className={`break-inside-avoid mb-3 relative flex flex-col border border-[#e5e5e0] rounded-2xl overflow-hidden transition-colors cursor-pointer select-none ${isSelected ? 'bg-[#ebebe5] border-[#999]' : 'bg-[#fcfcfc] active:bg-[#ebebe5]'}`}
+                      className={`break-inside-avoid mb-3 relative flex flex-col border border-[#e5e5e0] dark:border-[#333] rounded-2xl overflow-hidden transition-colors cursor-pointer select-none ${isSelected ? 'bg-[#ebebe5] dark:bg-[#252525] border-[#999] dark:border-[#555]' : 'bg-[#fcfcfc] dark:bg-[#1a1a1a] active:bg-[#ebebe5] dark:active:bg-[#252525]'}`}
                     >
                       <div className="p-3.5 pointer-events-none">
-                        <p className="text-[12.5px] font-serif leading-[1.6] text-[#555] break-words line-clamp-5">
+                        <p className="text-[12.5px] font-serif leading-[1.6] text-[#555] dark:text-[#aaa] break-words line-clamp-5">
                           {stripMarkdown(doc.content) || 'Empty document'}
                         </p>
                       </div>
-                      <div className="flex-shrink-0 bg-white border-t border-[#f0f0ea] p-3 pointer-events-none flex items-center justify-between">
+                      <div className="flex-shrink-0 bg-white dark:bg-[#222] border-t border-[#f0f0ea] dark:border-[#333] p-3 pointer-events-none flex items-center justify-between">
                         <div className="flex-1 overflow-hidden pr-2">
-                          <h3 className="text-[13px] font-serif font-medium text-[#111] mb-0.5 truncate">
+                          <h3 className="text-[13px] font-serif font-medium text-[#111] dark:text-[#eee] mb-0.5 truncate">
                             {doc.title || 'Untitled Document'}
                           </h3>
-                          <p className="text-[10px] font-sans text-[#777]">
+                          <p className="text-[10px] font-sans text-[#777] dark:text-[#555]">
                             {new Date(doc.lastModified).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                           </p>
                         </div>
@@ -217,13 +233,13 @@ function Home() {
                     onPointerLeave={cancelLongPress}
                     onPointerMove={cancelLongPress}
                     onClick={(e) => handleItemClick(e, doc.id)}
-                    className={`flex items-center justify-between py-5 px-2 border-b border-[#e5e5e0] transition-colors cursor-pointer select-none ${isSelected ? 'bg-[#ebebe5]' : 'active:bg-[#ebebe5]'}`}
+                    className={`flex items-center justify-between py-5 px-2 border-b border-[#e5e5e0] dark:border-[#333] transition-colors cursor-pointer select-none ${isSelected ? 'bg-[#ebebe5] dark:bg-[#252525]' : 'active:bg-[#ebebe5] dark:active:bg-[#252525]'}`}
                   >
                     <div className="flex-1 overflow-hidden pr-4 pointer-events-none">
-                      <h3 className="text-[17px] font-serif text-[#111] mb-1 truncate">
+                      <h3 className="text-[17px] font-serif text-[#111] dark:text-[#eee] mb-1 truncate">
                         {doc.title || 'Untitled Document'}
                       </h3>
-                      <p className="text-[13px] font-sans text-[#777]">
+                      <p className="text-[13px] font-sans text-[#777] dark:text-[#555]">
                         {new Date(doc.lastModified).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                       </p>
                     </div>
@@ -253,7 +269,7 @@ function Home() {
             isSelectionMode 
               ? 'w-[300px] h-[56px] rounded-[28px] px-3 gap-2' 
               : isMenuOpen
-                ? 'w-[260px] h-[56px] rounded-[28px] px-3'
+                ? 'w-[300px] h-[56px] rounded-[28px] px-3'
                 : 'w-[52px] h-[52px] rounded-full'
           }`}
         >
@@ -318,6 +334,13 @@ function Home() {
                   title="Toggle Layout"
                 >
                   {viewMode === 'list' ? <LayoutGrid size={18} strokeWidth={1.5} /> : <List size={18} strokeWidth={1.5} />}
+                </button>
+                <button 
+                  onClick={toggleTheme}
+                  className="p-2.5 rounded-full hover:bg-white/10 transition-colors flex items-center justify-center text-[#ddd] hover:text-white shrink-0 active:scale-95"
+                  title="Toggle Theme"
+                >
+                  {theme === 'light' ? <Moon size={18} strokeWidth={1.5} /> : <Sun size={18} strokeWidth={1.5} />}
                 </button>
                 <button 
                   onClick={() => { setIsSelectionMode(true); setIsMenuOpen(false); }}

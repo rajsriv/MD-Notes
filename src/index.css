@@ -1,9 +1,18 @@
+:root {
+  --bg-color: #f4f4f0;
+  --bg-color-rgb: 244, 244, 240;
+}
+.dark {
+  --bg-color: #121212;
+  --bg-color-rgb: 18, 18, 18;
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 @layer base {
   body {
-    @apply bg-[#f4f4f0] text-[#1a1a1a] antialiased selection:bg-orange-200;
+    @apply bg-[#f4f4f0] text-[#1a1a1a] antialiased selection:bg-orange-200 transition-colors duration-300;
+    @apply dark:bg-[#121212] dark:text-[#e0e0e0] dark:selection:bg-blue-900;
   }
 }
 .no-scrollbar::-webkit-scrollbar {
@@ -21,18 +30,18 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-[#d4d4d0] rounded-full;
+  @apply bg-[#d4d4d0] rounded-full dark:bg-[#333];
 }
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-[#b4b4b0];
+  @apply bg-[#b4b4b0] dark:bg-[#444];
 }
 .markdown-preview {
-  @apply font-serif text-[1.1rem] leading-[1.8] text-[#2c2c2c] max-w-2xl mx-auto pb-32 pt-20;
+  @apply font-serif text-[1.1rem] leading-[1.8] text-[#2c2c2c] max-w-2xl mx-auto pb-32 pt-20 dark:text-[#ccc];
 }
 .markdown-preview h1,
 .markdown-preview h2,
 .markdown-preview h3 {
-  @apply font-sans font-semibold text-black tracking-tight mb-4 mt-8;
+  @apply font-sans font-semibold text-black tracking-tight mb-4 mt-8 dark:text-white;
 }
 .markdown-preview h1 {
   @apply text-3xl md:text-4xl;
@@ -56,29 +65,29 @@
   @apply inline;
 }
 .markdown-preview a {
-  @apply text-blue-600 hover:text-blue-800 underline underline-offset-4 decoration-blue-300;
+  @apply text-blue-600 hover:text-blue-800 underline underline-offset-4 decoration-blue-300 dark:text-blue-400 dark:decoration-blue-700;
 }
 .markdown-preview blockquote {
-  @apply border-l-4 border-[#d4d4d0] pl-6 py-2 my-6 text-[#555] italic bg-[#efefeb] rounded-r-lg;
+  @apply border-l-4 border-[#d4d4d0] pl-6 py-2 my-6 text-[#555] italic bg-[#efefeb] rounded-r-lg dark:bg-[#1e1e1e] dark:border-[#444] dark:text-[#999];
 }
 .markdown-preview code {
-  @apply bg-[#efefeb] border border-[#e5e5e0] text-[#cf222e] rounded-md px-1.5 py-0.5 text-sm font-mono whitespace-pre-wrap;
+  @apply bg-[#efefeb] border border-[#e5e5e0] text-[#cf222e] rounded-md px-1.5 py-0.5 text-sm font-mono whitespace-pre-wrap dark:bg-[#1e1e1e] dark:border-[#333] dark:text-[#ff7b72];
 }
 .markdown-preview pre {
-  @apply bg-[#f6f8fa] rounded-xl p-6 mb-6 overflow-x-auto border border-[#d0d7de] shadow-sm;
+  @apply bg-[#f6f8fa] rounded-xl p-6 mb-6 overflow-x-auto border border-[#d0d7de] shadow-sm dark:bg-[#0d1117] dark:border-[#30363d];
 }
 .markdown-preview pre code {
-  @apply bg-transparent border-0 p-0 text-[#24292f] text-sm;
+  @apply bg-transparent border-0 p-0 text-[#24292f] text-sm dark:text-[#c9d1d9];
 }
 .markdown-preview img {
   @apply max-w-full rounded-xl shadow-sm my-8 mx-auto;
 }
 .markdown-preview table {
-  @apply w-full text-left border-collapse mb-6 bg-white rounded-xl overflow-hidden shadow-sm border border-[#e5e5e0];
+  @apply w-full text-left border-collapse mb-6 bg-white rounded-xl overflow-hidden shadow-sm border border-[#e5e5e0] dark:bg-[#1a1a1a] dark:border-[#333];
 }
 .markdown-preview th,
 .markdown-preview td {
-  @apply border-b border-[#e5e5e0] px-4 py-3;
+  @apply border-b border-[#e5e5e0] px-4 py-3 dark:border-[#333];
 }
 .markdown-preview tr:last-child td {
   @apply border-b-0;

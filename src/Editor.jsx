@@ -145,13 +145,13 @@ function Editor() {
     URL.revokeObjectURL(url);
   };
   return (
-    <div className="h-screen w-full flex flex-col bg-transparent text-[#111] overflow-hidden relative">
+    <div className="h-screen w-full flex flex-col bg-transparent text-[#111] dark:text-[#eee] overflow-hidden relative">
       <Dialog {...dialogConfig} onCancel={closeDialog} />
       {}
       <div 
-        className="absolute top-0 left-0 right-0 h-28 z-20 pointer-events-none"
+        className="absolute top-0 left-0 right-0 h-28 z-20 pointer-events-none transition-colors duration-300"
         style={{
-           background: 'linear-gradient(to bottom, rgba(244, 244, 240, 0.95) 10%, rgba(244, 244, 240, 0) 100%)',
+           background: 'linear-gradient(to bottom, var(--bg-color) 10%, transparent 100%)',
            backdropFilter: 'blur(8px)',
            WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)',
            maskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)'
@@ -161,13 +161,13 @@ function Editor() {
       <div className="absolute top-0 left-0 right-0 z-30 flex items-center gap-1 px-4 pt-5 pb-4 pointer-events-none">
         <RouterLink 
           to="/" 
-          className="p-2 text-[#555] hover:text-black transition-colors pointer-events-auto"
+          className="p-2 text-[#555] dark:text-[#999] hover:text-black dark:hover:text-white transition-colors pointer-events-auto"
         >
           <ChevronLeft size={28} strokeWidth={1.5} />
         </RouterLink>
         <button
           onClick={handleRename}
-          className="text-[16px] font-serif font-medium text-[#444] hover:text-black transition-colors px-2 py-1 rounded-md hover:bg-[#e5e5e0] truncate max-w-[200px] pointer-events-auto"
+          className="text-[16px] font-serif font-medium text-[#444] dark:text-[#999] hover:text-black dark:hover:text-white transition-colors px-2 py-1 rounded-md hover:bg-[#e5e5e0] dark:hover:bg-[#333] truncate max-w-[200px] pointer-events-auto"
           title="Click to rename"
         >
           {title || 'Untitled Document'}
