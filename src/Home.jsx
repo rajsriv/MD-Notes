@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FileText, Plus, ChevronRight, CheckCircle2, Circle, X, Trash2, Download, Edit3, LayoutGrid, List, CheckSquare, Sun, Moon } from 'lucide-react';
+import { FileText, Plus, ChevronRight, CheckCircle2, Circle, X, Trash2, Edit3, LayoutGrid, List, CheckSquare, Sun, Moon } from 'lucide-react';
 import Dialog from './Dialog';
 import Onboarding from './Onboarding';
 function Home({ currentTheme, onToggleTheme }) {
@@ -90,59 +90,6 @@ function Home({ currentTheme, onToggleTheme }) {
         setSelectedIds(new Set());
       }
     });
-  };
-  const handleDownload = async () => {
-    const idsToDownload = Array.from(selectedIds);
-    const docsToShare = idsToDownload.map(id => docs.find(d => d.id === id)).filter(Boolean);
-
-    if (docsToShare.length === 0) return;
-
-    // Try Web Share API first (native mobile experience)
-    if (navigator.share) {
-      try {
-        const files = docsToShare.map(doc => {
-          return new File([doc.content], `${doc.title || 'Untitled'}.md`, { type: 'text/markdown' });
-        });
-
-        // Check if browser can share files
-        if (navigator.canShare && navigator.canShare({ files })) {
-          await navigator.share({
-            files,
-            title: 'MD-Notes',
-          });
-          setIsSelectionMode(false);
-          setSelectedIds(new Set());
-          return;
-        }
-      } catch (err) {
-        // User cancelled or share failed, fallback to download
-        console.log('Share skipped or failed, falling back to download');
-      }
-    }
-
-    // Fallback: Individual staggered downloads
-    docsToShare.forEach((doc, index) => {
-      // Stagger downloads to prevent browser blocking
-      setTimeout(() => {
-        const blob = new Blob([doc.content], { type: 'text/markdown' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${doc.title || 'Untitled'}.md`;
-        document.body.appendChild(a);
-        a.click();
-        
-        // Cleanup
-        setTimeout(() => {
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        }, 100);
-      }, index * 200); // 200ms delay between each file
-    });
-
-    // Reset selection after starting the process
-    setIsSelectionMode(false);
-    setSelectedIds(new Set());
   };
   const handleRename = () => {
     const id = Array.from(selectedIds)[0];
@@ -316,12 +263,6 @@ function Home({ currentTheme, onToggleTheme }) {
                     <Edit3 size={18} strokeWidth={1.5} />
                   </button>
                 )}
-                <button 
-                  onClick={handleDownload}
-                  className="p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center text-[#666] dark:text-[#ddd] hover:text-black dark:hover:text-white shrink-0 active:scale-95"
-                >
-                  <Download size={18} strokeWidth={1.5} />
-                </button>
                 <button 
                   onClick={handleDelete}
                   className="p-2.5 rounded-full hover:bg-red-500/20 text-red-400 transition-colors flex items-center justify-center shrink-0 active:scale-95"

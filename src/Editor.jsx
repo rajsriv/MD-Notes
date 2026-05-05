@@ -9,7 +9,7 @@ import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Toolbar from './Toolbar';
 import CodeOutput from './CodeOutput';
-import { Download, Save, ChevronLeft, Type, X, Sun, Moon } from 'lucide-react';
+import { Save, ChevronLeft, Type, X, Sun, Moon, Copy, Check } from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
 import Dialog from './Dialog';
 const DEFAULT_MARKDOWN = `# Welcome to MD-Notes ✨
@@ -43,6 +43,7 @@ function Editor({ currentTheme, onToggleTheme }) {
   const [title, setTitle] = useState('');
   const [activeTab, setActiveTab] = useState('editor');
   const [isToolbarExpanded, setIsToolbarExpanded] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [dialogConfig, setDialogConfig] = useState({ isOpen: false });
   const closeDialog = () => setDialogConfig(prev => ({ ...prev, isOpen: false }));
   const editor = useEditor({
@@ -131,42 +132,17 @@ function Editor({ currentTheme, onToggleTheme }) {
       navigate(`/editor/${newId}`);
     }
   };
-  const handleDownload = async () => {
+  const handleCopy = async () => {
     const content = editor ? editor.getMarkdown() : markdown;
     if (!content) return;
 
-    const fileName = `${title || 'README'}.md`;
-
-    // Try Web Share API first (native mobile experience)
-    if (navigator.share) {
-      try {
-        const file = new File([content], fileName, { type: 'text/markdown' });
-        
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            title: title || 'MD Note',
-          });
-          return;
-        }
-      } catch (err) {
-        console.log('Share skipped or failed, falling back to download');
-      }
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
     }
-
-    const blob = new Blob([content], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    
-    // Cleanup
-    setTimeout(() => {
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }, 100);
   };
   return (
     <div className="h-screen w-full flex flex-col bg-[var(--bg-color)] transition-colors duration-300 text-[#111] dark:text-[#eee] overflow-hidden relative selection:bg-orange-100 dark:selection:bg-blue-900/30">
@@ -269,11 +245,11 @@ function Editor({ currentTheme, onToggleTheme }) {
               {currentTheme === 'light' ? <Moon size={18} strokeWidth={1.5} /> : <Sun size={18} strokeWidth={1.5} />}
             </button>
             <button
-              onClick={handleDownload}
+              onClick={handleCopy}
               className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center text-[#666] dark:text-[#ddd] hover:text-black dark:hover:text-white shrink-0"
-              aria-label="Download"
+              title="Copy Markdown"
             >
-              <Download size={18} strokeWidth={1.5} />
+              {copied ? <Check size={18} className="text-green-500" /> : <Copy size={18} strokeWidth={1.5} />}
             </button>
             <button
               onClick={() => setIsToolbarExpanded(true)}
