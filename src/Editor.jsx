@@ -176,9 +176,11 @@ function Editor() {
       {}
       <main className="flex-1 flex flex-col overflow-hidden relative">
         <div className={`flex-1 flex flex-col h-full absolute inset-0 transition-opacity duration-200 ${activeTab === 'editor' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}>
-          <div className="flex-1 overflow-auto custom-scrollbar">
-            <EditorContent editor={editor} className="h-full" />
-          </div>
+          <main className="flex-1 overflow-auto px-6 z-10 no-scrollbar pb-32 pt-28 max-w-2xl mx-auto w-full">
+            <div className="markdown-preview focus:outline-none">
+              <EditorContent editor={editor} />
+            </div>
+          </main>
         </div>
         <div className={`flex-1 flex flex-col h-full absolute inset-0 transition-opacity duration-200 ${activeTab === 'code' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}>
           <div className="pt-48 h-full flex flex-col">
@@ -188,9 +190,9 @@ function Editor() {
       </main>
       {}
       <div 
-        className="absolute bottom-0 left-0 right-0 h-[148px] z-30 pointer-events-none"
+        className="absolute bottom-0 left-0 right-0 h-[148px] z-30 pointer-events-none transition-colors duration-300"
         style={{
-           background: 'linear-gradient(to top, rgba(244, 244, 240, 0.95) 10%, rgba(244, 244, 240, 0) 100%)',
+           background: 'linear-gradient(to top, var(--bg-color) 10%, transparent 100%)',
            backdropFilter: 'blur(8px)',
            WebkitMaskImage: 'linear-gradient(to top, black 50%, transparent 100%)',
            maskImage: 'linear-gradient(to top, black 50%, transparent 100%)'
