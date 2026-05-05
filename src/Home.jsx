@@ -3,29 +3,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FileText, Plus, ChevronRight, CheckCircle2, Circle, X, Trash2, Download, Edit3, LayoutGrid, List, CheckSquare, Sun, Moon } from 'lucide-react';
 import Dialog from './Dialog';
 import Onboarding from './Onboarding';
-function Home() {
+function Home({ currentTheme, onToggleTheme }) {
   const [docs, setDocs] = useState([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [dialogConfig, setDialogConfig] = useState({ isOpen: false });
   const [viewMode, setViewMode] = useState(localStorage.getItem('readmeMaker_viewMode') || 'list');
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [theme, setTheme] = useState(() => {
-    const saved = localStorage.getItem('mdnotes_theme');
-    if (saved) return saved;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  });
-
-  useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    localStorage.setItem('mdnotes_theme', theme);
-  }, [theme]);
-
-  const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
   const navigate = useNavigate();
   const timerRef = useRef(null);
   const closeDialog = () => setDialogConfig(prev => ({ ...prev, isOpen: false }));
@@ -336,11 +320,11 @@ function Home() {
                   {viewMode === 'list' ? <LayoutGrid size={18} strokeWidth={1.5} /> : <List size={18} strokeWidth={1.5} />}
                 </button>
                 <button 
-                  onClick={toggleTheme}
+                  onClick={onToggleTheme}
                   className="p-2.5 rounded-full hover:bg-white/10 transition-colors flex items-center justify-center text-[#ddd] hover:text-white shrink-0 active:scale-95"
                   title="Toggle Theme"
                 >
-                  {theme === 'light' ? <Moon size={18} strokeWidth={1.5} /> : <Sun size={18} strokeWidth={1.5} />}
+                  {currentTheme === 'light' ? <Moon size={18} strokeWidth={1.5} /> : <Sun size={18} strokeWidth={1.5} />}
                 </button>
                 <button 
                   onClick={() => { setIsSelectionMode(true); setIsMenuOpen(false); }}
