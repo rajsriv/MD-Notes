@@ -3,6 +3,7 @@
   --bg-color-rgb: 244, 244, 240;
   --accent-color: #000000;
   --accent-color-rgb: 0, 0, 0;
+  --base-font-size: 100%;
 }
 .dark {
   --bg-color: #121212;
@@ -19,6 +20,76 @@ button:focus, button:active, a:focus, a:active {
   box-shadow: none !important;
 }
 
+/* Tiptap Task List Styling */
+ul[data-type="taskList"] {
+  list-style: none;
+  padding: 0;
+}
+
+ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+ul[data-type="taskList"] label {
+  flex: 0 0 auto;
+  margin-right: 0.75rem;
+  user-select: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+ul[data-type="taskList"] input[type="checkbox"] {
+  appearance: none;
+  background-color: transparent;
+  margin: 0;
+  font: inherit;
+  color: var(--accent-color);
+  width: 1.2rem;
+  height: 1.2rem;
+  border: 2px solid #ccc;
+  border-radius: 50%;
+  display: grid;
+  place-content: center;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+ul[data-type="taskList"] input[type="checkbox"]::before {
+  content: "";
+  width: 0.65rem;
+  height: 0.65rem;
+  transform: scale(0);
+  transition: 120ms transform ease-in-out;
+  box-shadow: inset 1em 1em var(--accent-color);
+  background-color: CanvasText;
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+
+ul[data-type="taskList"] input[type="checkbox"]:checked {
+  border-color: var(--accent-color);
+}
+
+ul[data-type="taskList"] input[type="checkbox"]:checked::before {
+  transform: scale(1);
+}
+
+ul[data-type="taskList"] li[data-checked="true"] > div > p {
+  color: #888;
+  text-decoration: line-through;
+  transition: all 0.2s ease;
+}
+
+.dark ul[data-type="taskList"] input[type="checkbox"] {
+  border-color: #555;
+}
+
+.dark ul[data-type="taskList"] input[type="checkbox"]:checked {
+  border-color: var(--accent-color, #3b82f6);
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -32,6 +103,7 @@ button:focus, button:active, a:focus, a:active {
   body {
     @apply bg-[var(--bg-color)] text-[#1a1a1a] antialiased transition-colors duration-300;
     @apply dark:text-[#e0e0e0];
+    font-size: var(--base-font-size);
     selection-background-color: var(--accent-color);
     selection-color: white;
   }
@@ -164,4 +236,40 @@ button:focus, button:active, a:focus, a:active {
 
 .animation-delay-4000 {
   animation-delay: 4s;
+}
+
+.math-node {
+  @apply rounded px-1 transition-colors duration-200;
+}
+
+.math-inline-node {
+  @apply bg-transparent;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.math-block-node {
+  @apply my-6 p-4 bg-gray-50/50 dark:bg-gray-900/30 rounded-xl border border-gray-100 dark:border-gray-800 transition-all;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 3rem;
+}
+
+.math-block-node:hover {
+  @apply border-gray-300 dark:border-gray-700 bg-gray-100/50 dark:bg-gray-800/50;
+}
+
+.ProseMirror-selectednode.math-node {
+  @apply ring-2 ring-[var(--accent-color)] ring-offset-2 dark:ring-offset-black;
+}
+
+/* KaTeX specific overrides for better integration */
+.katex-display {
+  margin: 0 !important;
+}
+
+.katex {
+  font-size: 1.1em !important;
+  text-rendering: auto !important;
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -9,9 +9,185 @@ import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Toolbar from './Toolbar';
 import CodeOutput from './CodeOutput';
-import { Save, ChevronLeft, Type, X, Sun, Moon, Copy, Check, Palette } from 'lucide-react';
+import { Save, ChevronLeft, Type, X, Sun, Moon, Copy, Check, Palette, BookOpen, Eye, EyeOff, Sigma } from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
 import Dialog from './Dialog';
+import { Node, InputRule, mergeAttributes, PasteRule } from '@tiptap/core';
+import { Plugin, PluginKey } from '@tiptap/pm/state';
+import katex from 'katex';
+import 'katex/dist/katex.min.css';
+const Mathematics = Node.create({
+  name: 'mathematics',
+  group: 'inline',
+  inline: true,
+  selectable: true,
+  atom: true,
+
+  addAttributes() {
+    return {
+      latex: { default: '' },
+      display: { default: false },
+    };
+  },
+
+  addStorage() {
+    return {
+      markdown: {
+        serialize: (state, node) => {
+          if (node.attrs.display) {
+            state.write(`\n\n$$\n${node.attrs.latex}\n$$\n\n`);
+          } else {
+            state.write(`$${node.attrs.latex}$`);
+          }
+        },
+        parse: {
+          setup: (markdownit) => {
+            // Optional: configure markdown-it if needed
+          },
+        },
+      },
+    };
+  },
+
+  parseHTML() {
+    return [
+      {
+        tag: 'span[data-latex]',
+        getAttrs: (el) => ({ latex: el.getAttribute('data-latex'), display: false }),
+      },
+      {
+        tag: 'div[data-latex]',
+        getAttrs: (el) => ({ latex: el.getAttribute('data-latex'), display: true }),
+      },
+    ];
+  },
+
+  renderHTML({ node, HTMLAttributes }) {
+    if (node.attrs.display) {
+      return ['div', mergeAttributes(HTMLAttributes, { 
+        'data-latex': node.attrs.latex,
+        class: 'math-node math-block-node' 
+      })];
+    }
+    return ['span', mergeAttributes(HTMLAttributes, { 
+      'data-latex': node.attrs.latex,
+      class: 'math-node math-inline-node'
+    })];
+  },
+
+  addInputRules() {
+    return [
+      new InputRule({
+        find: /\$\$([^$]+)\$\$$/,
+        handler: ({ state, range, match }) => {
+          const start = range.from;
+          const end = range.to;
+          const latex = match[1];
+          state.tr.replaceWith(start, end, this.type.create({ latex, display: true }));
+        },
+      }),
+      new InputRule({
+        find: /\$([^$]+)\$$/,
+        handler: ({ state, range, match }) => {
+          const start = range.from;
+          const end = range.to;
+          const latex = match[1];
+          state.tr.replaceWith(start, end, this.type.create({ latex, display: false }));
+        },
+      }),
+    ];
+  },
+
+  addPasteRules() {
+    return [
+      new PasteRule({
+        find: /\$\$([\s\S]+?)\$\$/g,
+        type: this.type,
+        getAttributes: match => ({ latex: match[1], display: true }),
+      }),
+      new PasteRule({
+        find: /\$([^$]+)\$/g,
+        type: this.type,
+        getAttributes: match => ({ latex: match[1], display: false }),
+      }),
+    ];
+  },
+
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: new PluginKey('math-auto-parse'),
+        appendTransaction: (transactions, oldState, newState) => {
+          if (!transactions.some(tr => tr.docChanged)) return;
+          
+          let tr = newState.tr;
+          let modified = false;
+
+          // Collect all matches first to avoid position issues during replacement
+          const matches = [];
+          newState.doc.descendants((node, pos) => {
+            if (node.isText) {
+              const text = node.text;
+              const regex = /\$\$([\s\S]+?)\$\$|\$([^$]+)\$/g;
+              let match;
+              while ((match = regex.exec(text)) !== null) {
+                const isBlock = !!match[1];
+                const latex = (match[1] || match[2]).trim();
+                matches.push({
+                  start: pos + match.index,
+                  end: pos + match.index + match[0].length,
+                  latex,
+                  display: isBlock
+                });
+              }
+            }
+          });
+
+          // Apply replacements from back to front
+          for (let i = matches.length - 1; i >= 0; i--) {
+            const { start, end, latex, display } = matches[i];
+            tr.replaceWith(start, end, this.type.create({ latex, display }));
+            modified = true;
+          }
+
+          return modified ? tr : null;
+        },
+      }),
+    ];
+  },
+
+  addNodeView() {
+    return ({ node, getPos }) => {
+      const dom = document.createElement(node.attrs.display ? 'div' : 'span');
+      dom.className = node.attrs.display ? 'math-node math-block-node' : 'math-node math-inline-node';
+      
+      const render = () => {
+        try {
+          katex.render(node.attrs.latex || '...', dom, {
+            displayMode: node.attrs.display,
+            throwOnError: false,
+          });
+        } catch (e) {
+          dom.textContent = node.attrs.latex;
+        }
+      };
+      
+      render();
+      return { 
+        dom,
+        update: (newNode) => {
+          if (newNode.type.name !== this.name) return false;
+          if (newNode.attrs.latex !== node.attrs.latex || newNode.attrs.display !== node.attrs.display) {
+            node = newNode;
+            render();
+          }
+          return true;
+        }
+      };
+    };
+  },
+});
+
 const DEFAULT_MARKDOWN = `# Welcome to MD-Notes ✨
 A beautifully crafted, **distraction-free** Markdown workspace for your thoughts, ideas, and code snippets.
 ## Features
@@ -31,7 +207,7 @@ function captureIdea(idea) {
 - [ ] Jot down some brilliant ideas
 > "The palest ink is better than the best memory."
 `;
-function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent }) {
+function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, globalTextSize, onUpdateTextSize }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const initialContent = useMemo(() => {
@@ -47,6 +223,7 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [noteAccent, setNoteAccent] = useState(null);
+  const [isReadingMode, setIsReadingMode] = useState(false);
 
   const ACCENT_COLORS = [
     { name: 'Slate', color: '#000000' },
@@ -66,6 +243,7 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent }) {
       Image,
       TaskList,
       TaskItem.configure({ nested: true }),
+      Mathematics,
     ],
     content: initialContent,
     contentType: 'markdown',
@@ -75,7 +253,17 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent }) {
     onUpdate: ({ editor }) => {
       setMarkdown(editor.getMarkdown());
     },
+    editable: !isReadingMode,
   });
+
+  useEffect(() => {
+    if (editor) {
+      editor.setEditable(!isReadingMode);
+      if (isReadingMode) {
+        setActiveTab('editor');
+      }
+    }
+  }, [isReadingMode, editor]);
   useEffect(() => {
     if (id && editor) {
       const savedDocs = JSON.parse(localStorage.getItem('readmeMaker_docs') || '[]');
@@ -92,6 +280,7 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent }) {
       editor.commands.setContent(jsonContent, false);
     }
   }, [id, editor]);
+
 
   useEffect(() => {
     const root = document.documentElement;
@@ -226,13 +415,24 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent }) {
           {title || 'Untitled Document'}
         </button>
         <div className="flex-1" />
-        <button
-          onClick={handleSave}
-          className="p-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full hover:shadow-lg active:scale-95 transition-all pointer-events-auto"
-          title="Save Document"
-        >
-          <Save size={20} strokeWidth={2} />
-        </button>
+        <div className="flex items-center gap-2 pointer-events-auto">
+          <button
+            onClick={() => setIsReadingMode(!isReadingMode)}
+            className={`p-2.5 rounded-full transition-all active:scale-95 ${isReadingMode ? 'bg-black dark:bg-white text-white dark:text-black' : 'bg-transparent text-[#666] dark:text-[#999] hover:bg-black/5 dark:hover:bg-white/10'}`}
+            title={isReadingMode ? "Exit Reading Mode" : "Enter Reading Mode"}
+          >
+            {isReadingMode ? <BookOpen size={20} strokeWidth={2.5} /> : <Eye size={20} strokeWidth={2} />}
+          </button>
+          {!isReadingMode && (
+            <button
+              onClick={handleSave}
+              className="p-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full hover:shadow-lg active:scale-95 transition-all"
+              title="Save Document"
+            >
+              <Save size={20} strokeWidth={2} />
+            </button>
+          )}
+        </div>
       </div>
       <main 
         className="flex-1 flex flex-col overflow-hidden relative transition-colors duration-500"
@@ -264,13 +464,14 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent }) {
           maskImage: 'linear-gradient(to top, black 0%, transparent 100%)'
         }}
       />
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center">
+      {!isReadingMode && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center">
         <div
           className={`bg-white dark:bg-[#1a1a1a] text-black dark:text-white shadow-2xl shadow-black/10 dark:shadow-black/40 border border-[#e5e5e0] dark:border-[#333] transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] relative overflow-hidden ${isToolbarExpanded
             ? 'w-[94vw] max-w-3xl rounded-2xl h-14'
             : isColorPickerOpen
               ? 'w-[280px] rounded-2xl h-14'
-              : 'w-[320px] rounded-full h-[52px]'
+              : 'w-[360px] rounded-full h-[54px]'
             }`}
         >
           {/* Color Picker Content */}
@@ -300,6 +501,7 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent }) {
                 className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white dark:bg-[#333] rounded-full shadow-sm transition-transform duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] ${
                   activeTab === 'code' ? 'translate-x-full' : 'translate-x-0'
                 }`}
+                style={{ width: isReadingMode ? '100%' : 'calc(50% - 4px)' }}
               />
               <button
                 onClick={() => setActiveTab('editor')}
@@ -307,12 +509,14 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent }) {
               >
                 Read
               </button>
-              <button
-                onClick={() => setActiveTab('code')}
-                className={`relative z-10 px-4 py-1.5 rounded-full text-[13px] font-medium transition-all duration-300 ${activeTab === 'code' ? 'text-black dark:text-white' : 'text-[#666] dark:text-[#999] hover:text-black dark:hover:text-white'}`}
-              >
-                Code
-              </button>
+              {!isReadingMode && (
+                <button
+                  onClick={() => setActiveTab('code')}
+                  className={`relative z-10 px-4 py-1.5 rounded-full text-[13px] font-medium transition-all duration-300 ${activeTab === 'code' ? 'text-black dark:text-white' : 'text-[#666] dark:text-[#999] hover:text-black dark:hover:text-white'}`}
+                >
+                  Code
+                </button>
+              )}
             </div>
             {currentTheme === 'light' && (
               <button
@@ -354,6 +558,8 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent }) {
                 editor={editor}
                 setExternalDialog={setDialogConfig}
                 closeExternalDialog={closeDialog}
+                globalTextSize={globalTextSize}
+                onUpdateTextSize={onUpdateTextSize}
               />
             </div>
             <button
@@ -366,7 +572,8 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent }) {
           </div>
         </div>
       </div>
-    </div>
+    )}
+  </div>
   );
 }
 export default Editor;

@@ -1,9 +1,76 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FileText, Plus, ChevronRight, CheckCircle2, Circle, X, Trash2, Edit3, LayoutGrid, List, CheckSquare, Sun, Moon, Palette } from 'lucide-react';
+import { FileText, Plus, ChevronRight, CheckCircle2, Circle, X, Trash2, Edit3, LayoutGrid, List, CheckSquare, Sun, Moon, Palette, Type } from 'lucide-react';
 import Dialog from './Dialog';
 import Onboarding from './Onboarding';
-function Home({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent }) {
+import katex from 'katex';
+import 'katex/dist/katex.min.css';
+
+const MARKDOWN_GUIDE = `# Markdown Essentials 📝
+
+Master the art of Markdown with this quick reference guide.
+
+## Text Formatting
+- **Bold**: \`**text**\`
+- *Italic*: \`*text*\`
+- ~~Strikethrough~~: \`~~text~~\`
+- \`Inline Code\`: \`\\\`code\\\` \`
+
+## Lists
+### Unordered
+- Item 1
+- Item 2
+  - Sub-item
+
+### Ordered
+1. First
+2. Second
+3. Third
+
+### Task List
+- [x] Completed task
+- [ ] Pending task
+
+## Blockquotes
+> "Markdown is a text-to-HTML conversion tool for web writers."
+
+## Links & Images
+[Visit Tiptap](https://tiptap.dev)
+![Placeholder Image](https://images.unsplash.com/photo-1499750310107-5fef28a66643?q=80&w=800&auto=format&fit=crop)
+
+## Tables
+| Feature | Support |
+| :--- | :--- |
+| Markdown | Excellent |
+| LaTeX | Enabled |
+| Design | Premium |
+`;
+
+const LATEX_GUIDE = `# LaTeX Math Guide 🧮
+
+Welcome to the LaTeX-enabled editor! You can now write complex mathematical formulas with ease.
+
+## Inline Math
+You can write math within a sentence by surrounding it with single dollar signs. For example: $E = mc^2$ or $\\sqrt{a^2 + b^2} = c$.
+
+## Block Math
+For larger equations, use double dollar signs to create a centered block:
+
+$$
+x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}
+$$
+
+## Useful Symbols
+- Fractions: $\\frac{a}{b}$
+- Exponents: $x^n$
+- Subscripts: $a_i$
+- Integrals: $\\int_a^b f(x) dx$
+- Sums: $\\sum_{i=1}^n i$
+- Greek Letters: $\\alpha, \\beta, \\gamma, \\Delta$
+
+Happy typesetting!`;
+
+function Home({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, globalTextSize, onUpdateTextSize }) {
   const [docs, setDocs] = useState([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -11,6 +78,7 @@ function Home({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent }) {
   const [viewMode, setViewMode] = useState(localStorage.getItem('readmeMaker_viewMode') || 'list');
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
+  const [isTextScaleOpen, setIsTextScaleOpen] = useState(false);
   const navigate = useNavigate();
   const timerRef = useRef(null);
 
@@ -36,12 +104,37 @@ function Home({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent }) {
       .trim();
   };
   useEffect(() => {
-    loadDocs();
+    const savedDocs = JSON.parse(localStorage.getItem('readmeMaker_docs') || '[]');
+    if (savedDocs.length === 0) {
+      const now = Date.now();
+      const templates = [
+        {
+          id: 'markdown-guide-' + now,
+          title: 'Markdown Essentials',
+          content: MARKDOWN_GUIDE,
+          lastModified: now + 100,
+          accentColor: '#2563eb' // Blue
+        },
+        {
+          id: 'latex-guide-' + now,
+          title: 'LaTeX Math Guide',
+          content: LATEX_GUIDE,
+          lastModified: now,
+          accentColor: '#7c3aed' // Violet
+        }
+      ];
+      localStorage.setItem('readmeMaker_docs', JSON.stringify(templates));
+      setDocs(templates);
+    } else {
+      loadDocs();
+    }
+    
     const hasOnboarded = localStorage.getItem('mdnotes_onboarded');
     if (!hasOnboarded) {
       setShowOnboarding(true);
     }
   }, []);
+
   const handleOnboardingComplete = () => {
     localStorage.setItem('mdnotes_onboarded', 'true');
     setShowOnboarding(false);
@@ -211,10 +304,33 @@ function Home({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent }) {
                       className={`break-inside-avoid mb-3 relative flex flex-col border border-[#e5e5e0] dark:border-[#333] rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer select-none ${isSelected ? 'bg-[#ebebe5] dark:bg-[#252525] border-[#999] dark:border-[#555]' : 'shadow-sm active:scale-[0.98]'}`}
                       style={{ backgroundColor: currentTheme === 'light' ? `${doc.accentColor || '#ffffff'}15` : '#1a1a1a' }}
                     >
-                      <div className="p-3.5 pointer-events-none">
-                        <p className="text-[12.5px] font-serif leading-[1.6] text-[#444] dark:text-[#aaa] break-words line-clamp-5">
-                          {stripMarkdown(doc.content) || 'Empty document'}
-                        </p>
+                      <div className="p-3.5 pointer-events-none overflow-hidden max-h-[160px]">
+                        <div className="prose prose-sm prose-slate dark:prose-invert max-w-none">
+                          <div 
+                            className="text-[12.5px] font-serif leading-[1.6] text-[#444] dark:text-[#aaa] break-words line-clamp-6"
+                            dangerouslySetInnerHTML={{ 
+                              __html: (doc.content || '')
+                                .replace(/\$\$([\s\S]+?)\$\$/g, (_, math) => {
+                                  try {
+                                    return `<div class="katex-preview-block my-3">${katex.renderToString(math.trim(), { displayMode: true, throwOnError: false })}</div>`;
+                                  } catch (e) { return `$$${math}$$`; }
+                                })
+                                .replace(/\$([^$]+?)\$/g, (_, math) => {
+                                  try {
+                                    return `<span class="katex-preview-inline">${katex.renderToString(math.trim(), { displayMode: false, throwOnError: false })}</span>`;
+                                  } catch (e) { return `$${math}$`; }
+                                })
+                                .replace(/^# (.*$)/gm, '<h1 class="text-sm font-bold mb-1">$1</h1>')
+                                .replace(/^## (.*$)/gm, '<h2 class="text-xs font-bold mb-1">$1</h2>')
+                                .replace(/^### (.*$)/gm, '<h3 class="text-[11px] font-bold mb-0.5">$1</h3>')
+                                .replace(/^\> (.*$)/gm, '<blockquote class="border-l-2 border-gray-300 pl-2 italic">$1</blockquote>')
+                                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                                .replace(/^[-*] (.*$)/gm, '<li class="ml-2 list-none">• $1</li>')
+                                .replace(/\n/g, '<br/>')
+                            }} 
+                          />
+                        </div>
                       </div>
                       <div className="flex-shrink-0 bg-[#f9f9f9]/50 dark:bg-[#222] border-t border-[#f0f0ea] dark:border-[#333] p-3 pointer-events-none flex items-center justify-between">
                         <div className="flex-1 overflow-hidden pr-2">
@@ -278,11 +394,32 @@ function Home({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent }) {
               ? 'w-[94vw] max-w-3xl rounded-2xl h-14' 
               : isColorPickerOpen
                 ? 'w-[280px] rounded-2xl h-14'
-                : isMenuOpen
-                  ? 'w-[300px] rounded-[28px] h-14'
-                  : 'w-[52px] h-[52px] rounded-full'
+                : isTextScaleOpen
+                  ? 'w-[280px] rounded-2xl h-14'
+                  : isMenuOpen
+                    ? 'w-[350px] rounded-full h-14'
+                    : 'w-[52px] h-[52px] rounded-full'
           }`}
         >
+          {/* Text Scale Content */}
+          <div className={`absolute inset-0 flex items-center justify-center gap-3 px-4 transition-all duration-300 ${isTextScaleOpen && !isSelectionMode ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+            <button onClick={() => setIsTextScaleOpen(false)} className="p-1.5 hover:bg-black/5 dark:hover:bg-white/10 rounded-full">
+              <X size={16} />
+            </button>
+            <div className="flex-1 flex items-center gap-3">
+              <span className="text-[10px] font-bold opacity-50">A</span>
+              <input 
+                type="range" 
+                min="70" 
+                max="150" 
+                value={globalTextSize} 
+                onChange={(e) => onUpdateTextSize(parseInt(e.target.value))}
+                className="flex-1 h-1 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-black dark:accent-white"
+              />
+              <span className="text-[14px] font-bold">A</span>
+            </div>
+            <span className="text-[11px] font-mono w-8 text-right">{globalTextSize}%</span>
+          </div>
           {/* Color Picker Content */}
           <div className={`absolute inset-0 flex items-center justify-center gap-3 px-4 transition-all duration-300 ${isColorPickerOpen && !isSelectionMode ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
             <button onClick={() => setIsColorPickerOpen(false)} className="p-1.5 hover:bg-black/5 dark:hover:bg-white/10 rounded-full">
@@ -338,7 +475,7 @@ function Home({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent }) {
           </div>
 
           {/* Default / Menu Mode Content */}
-          <div className={`absolute inset-0 flex items-center justify-between px-2 transition-all duration-300 ${!isSelectionMode && !isColorPickerOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+          <div className={`absolute inset-0 flex items-center justify-between px-2 transition-all duration-300 ${!isSelectionMode && !isColorPickerOpen && !isTextScaleOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
             {!isMenuOpen ? (
               <button 
                 onClick={() => setIsMenuOpen(true)}
@@ -393,6 +530,13 @@ function Home({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent }) {
                       <Palette size={18} strokeWidth={1.5} />
                     </button>
                   )}
+                  <button 
+                    onClick={() => setIsTextScaleOpen(true)}
+                    className="p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center text-[#666] dark:text-[#ddd] hover:text-black dark:hover:text-white shrink-0 active:scale-95"
+                    title="Text Size"
+                  >
+                    <Type size={18} strokeWidth={1.5} />
+                  </button>
                   <button 
                     onClick={() => { setIsSelectionMode(true); setIsMenuOpen(false); }}
                     className="p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center text-[#666] dark:text-[#ddd] hover:text-black dark:hover:text-white shrink-0 active:scale-95"
