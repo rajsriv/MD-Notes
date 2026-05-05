@@ -260,7 +260,11 @@ function Editor() {
             }`}
           >
             <div className="flex-1 overflow-hidden flex items-center h-full">
-              <Toolbar editor={editor} />
+              <Toolbar 
+                editor={editor} 
+                setExternalDialog={setDialogConfig} 
+                closeExternalDialog={closeDialog} 
+              />
             </div>
             <button 
               onClick={() => setIsToolbarExpanded(false)}

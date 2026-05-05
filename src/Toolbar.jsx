@@ -6,15 +6,13 @@ import {
   List, ListOrdered, CheckSquare 
 } from 'lucide-react';
 import Dialog from './Dialog';
-function Toolbar({ editor }) {
-  const [dialogConfig, setDialogConfig] = useState({ isOpen: false });
+function Toolbar({ editor, setExternalDialog, closeExternalDialog }) {
   if (!editor) {
     return null;
   }
-  const closeDialog = () => setDialogConfig(prev => ({ ...prev, isOpen: false }));
   const setLink = () => {
     const previousUrl = editor.getAttributes('link').href;
-    setDialogConfig({
+    setExternalDialog({
       isOpen: true,
       type: 'prompt',
       title: 'Insert Link',
@@ -30,7 +28,7 @@ function Toolbar({ editor }) {
     });
   };
   const setImage = () => {
-    setDialogConfig({
+    setExternalDialog({
       isOpen: true,
       type: 'prompt',
       title: 'Insert Image',
@@ -63,31 +61,28 @@ function Toolbar({ editor }) {
     { icon: <CheckSquare size={20} />, label: 'Task List', isActive: editor.isActive('taskList'), action: () => editor.chain().focus().toggleTaskList().run() },
   ];
   return (
-    <>
-      <Dialog {...dialogConfig} onCancel={closeDialog} />
-      <div className="flex items-center gap-1 overflow-x-auto no-scrollbar px-1">
-        {tools.map((tool, index) => {
-          if (tool.divider) {
-            return <div key={index} className="w-[1px] h-5 bg-[#444] mx-1.5 flex-shrink-0" />;
-          }
-          return (
-            <button
-              key={index}
-              title={tool.label}
-              onClick={tool.action}
-              className={`p-1.5 rounded-full transition-colors flex-shrink-0 active:scale-95 ${
-                tool.isActive 
-                  ? 'text-black bg-white shadow-sm' 
-                  : 'text-[#aaa] hover:text-white hover:bg-white/10'
-              }`}
-              aria-label={tool.label}
-            >
-              {tool.icon}
-            </button>
-          );
-        })}
-      </div>
-    </>
+    <div className="flex items-center gap-1 overflow-x-auto no-scrollbar px-1">
+      {tools.map((tool, index) => {
+        if (tool.divider) {
+          return <div key={index} className="w-[1px] h-5 bg-[#444] mx-1.5 flex-shrink-0" />;
+        }
+        return (
+          <button
+            key={index}
+            title={tool.label}
+            onClick={tool.action}
+            className={`p-1.5 rounded-full transition-colors flex-shrink-0 active:scale-95 ${
+              tool.isActive 
+                ? 'text-black bg-white shadow-sm' 
+                : 'text-[#aaa] hover:text-white hover:bg-white/10'
+            }`}
+            aria-label={tool.label}
+          >
+            {tool.icon}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 export default Toolbar;
