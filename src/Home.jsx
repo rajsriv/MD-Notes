@@ -1,17 +1,27 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FileText, Plus, ChevronRight, CheckCircle2, Circle, X, Trash2, Edit3, LayoutGrid, List, CheckSquare, Sun, Moon } from 'lucide-react';
+import { FileText, Plus, ChevronRight, CheckCircle2, Circle, X, Trash2, Edit3, LayoutGrid, List, CheckSquare, Sun, Moon, Palette } from 'lucide-react';
 import Dialog from './Dialog';
 import Onboarding from './Onboarding';
-function Home({ currentTheme, onToggleTheme }) {
+function Home({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent }) {
   const [docs, setDocs] = useState([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [dialogConfig, setDialogConfig] = useState({ isOpen: false });
   const [viewMode, setViewMode] = useState(localStorage.getItem('readmeMaker_viewMode') || 'list');
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
   const navigate = useNavigate();
   const timerRef = useRef(null);
+
+  const ACCENT_COLORS = [
+    { name: 'Slate', color: '#000000' },
+    { name: 'Rose', color: '#e11d48' },
+    { name: 'Amber', color: '#d97706' },
+    { name: 'Emerald', color: '#059669' },
+    { name: 'Blue', color: '#2563eb' },
+    { name: 'Violet', color: '#7c3aed' },
+  ];
   const closeDialog = () => setDialogConfig(prev => ({ ...prev, isOpen: false }));
   const toggleViewMode = () => {
     const newMode = viewMode === 'list' ? 'grid' : 'list';
@@ -118,32 +128,62 @@ function Home({ currentTheme, onToggleTheme }) {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  const LavaLamp = () => {
+    if (currentTheme === 'dark') return null;
+    return (
+      <div 
+        className="absolute inset-0 overflow-hidden pointer-events-none opacity-40 mix-blend-multiply"
+        style={{
+          WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 60%, transparent 100%)',
+          maskImage: 'linear-gradient(to bottom, black 0%, black 60%, transparent 100%)'
+        }}
+      >
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full blur-[100px] animate-blob" style={{ backgroundColor: 'var(--accent-color)' }}></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full blur-[120px] animate-blob animation-delay-2000" style={{ backgroundColor: 'var(--accent-color)' }}></div>
+        <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] rounded-full blur-[80px] animate-blob animation-delay-4000" style={{ backgroundColor: 'var(--accent-color)' }}></div>
+      </div>
+    );
+  };
+
   return (
     <div className="h-screen flex flex-col bg-[var(--bg-color)] transition-colors duration-300 relative overflow-hidden">
       {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
       <Dialog {...dialogConfig} onCancel={closeDialog} />
       
       <div 
-        className="fixed top-0 left-0 right-0 h-[280px] z-20 pointer-events-none transition-colors duration-300"
+        className="fixed top-0 left-0 right-0 h-[320px] z-20 pointer-events-none transition-colors duration-300"
         style={{
-           background: 'linear-gradient(to bottom, var(--bg-color) 241px, transparent 100%)',
-           backdropFilter: 'blur(12px)',
-           WebkitMaskImage: 'linear-gradient(to bottom, black 241px, transparent 100%)',
-           maskImage: 'linear-gradient(to bottom, black 241px, transparent 100%)'
+           background: `linear-gradient(to bottom, var(--bg-color) 0%, transparent 100%)`,
+           backdropFilter: 'blur(20px)',
+           WebkitMaskImage: 'linear-gradient(to bottom, black 0%, transparent 100%)',
+           maskImage: 'linear-gradient(to bottom, black 0%, transparent 100%)'
+        }}
+      />
+      
+      <div 
+        className="fixed bottom-0 left-0 right-0 h-[180px] z-30 pointer-events-none transition-colors duration-300"
+        style={{
+           background: `linear-gradient(to top, var(--bg-color) 0%, transparent 100%)`,
+           backdropFilter: 'blur(20px)',
+           WebkitMaskImage: 'linear-gradient(to top, black 0%, transparent 100%)',
+           maskImage: 'linear-gradient(to top, black 0%, transparent 100%)'
         }}
       />
       
       <div className="fixed top-0 left-0 right-0 z-30 pointer-events-none">
-        <header className="pt-16 pb-4 px-8 flex flex-col items-start max-w-2xl mx-auto w-full pointer-events-auto">
-          <h1 className="text-4xl font-serif text-black dark:text-white mb-2 tracking-tight">
-            MD-Notes
-          </h1>
-          <p className="text-[16px] font-serif text-[#666] dark:text-[#999] italic text-left max-w-[280px] leading-relaxed mb-8">
-            Craft perfect Markdown documentation right from your device.
-          </p>
-          {docs.length > 0 && (
-            <h2 className="text-xs font-sans font-semibold text-[#888] dark:text-[#666] uppercase tracking-widest px-2">What went down in History?</h2>
-          )}
+        <header className="pt-16 pb-24 px-8 flex flex-col items-start max-w-2xl mx-auto w-full pointer-events-auto relative min-h-[340px]">
+          <LavaLamp />
+          <div className="relative z-10">
+            <h1 className="text-4xl font-serif text-black dark:text-white mb-2 tracking-tight">
+              MD-Notes
+            </h1>
+            <p className="text-[16px] font-serif text-[#666] dark:text-[#999] italic text-left max-w-[280px] leading-relaxed mb-8">
+              Craft perfect Markdown documentation right from your device.
+            </p>
+            {docs.length > 0 && (
+              <h2 className="text-xs font-sans font-semibold text-[#888] dark:text-[#666] uppercase tracking-widest px-2">What went down in History?</h2>
+            )}
+          </div>
         </header>
       </div>
       
@@ -168,14 +208,15 @@ function Home({ currentTheme, onToggleTheme }) {
                       onPointerLeave={cancelLongPress}
                       onPointerMove={cancelLongPress}
                       onClick={(e) => handleItemClick(e, doc.id)}
-                      className={`break-inside-avoid mb-3 relative flex flex-col border border-[#e5e5e0] dark:border-[#333] rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer select-none ${isSelected ? 'bg-[#ebebe5] dark:bg-[#252525] border-[#999] dark:border-[#555]' : 'bg-white dark:bg-[#1a1a1a] shadow-sm active:scale-[0.98]'}`}
+                      className={`break-inside-avoid mb-3 relative flex flex-col border border-[#e5e5e0] dark:border-[#333] rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer select-none ${isSelected ? 'bg-[#ebebe5] dark:bg-[#252525] border-[#999] dark:border-[#555]' : 'shadow-sm active:scale-[0.98]'}`}
+                      style={{ backgroundColor: currentTheme === 'light' ? `${doc.accentColor || '#ffffff'}15` : '#1a1a1a' }}
                     >
                       <div className="p-3.5 pointer-events-none">
                         <p className="text-[12.5px] font-serif leading-[1.6] text-[#444] dark:text-[#aaa] break-words line-clamp-5">
                           {stripMarkdown(doc.content) || 'Empty document'}
                         </p>
                       </div>
-                      <div className="flex-shrink-0 bg-[#f9f9f9] dark:bg-[#222] border-t border-[#f0f0ea] dark:border-[#333] p-3 pointer-events-none flex items-center justify-between">
+                      <div className="flex-shrink-0 bg-[#f9f9f9]/50 dark:bg-[#222] border-t border-[#f0f0ea] dark:border-[#333] p-3 pointer-events-none flex items-center justify-between">
                         <div className="flex-1 overflow-hidden pr-2">
                           <h3 className="text-[13px] font-serif font-medium text-black dark:text-[#eee] mb-0.5 truncate">
                             {doc.title || 'Untitled Document'}
@@ -199,7 +240,8 @@ function Home({ currentTheme, onToggleTheme }) {
                     onPointerLeave={cancelLongPress}
                     onPointerMove={cancelLongPress}
                     onClick={(e) => handleItemClick(e, doc.id)}
-                    className={`flex items-center justify-between py-5 px-2 border-b border-[#e5e5e0] dark:border-[#333] transition-colors cursor-pointer select-none ${isSelected ? 'bg-[#ebebe5] dark:bg-[#252525]' : 'hover:bg-white/40 active:bg-[#ebebe5] dark:active:bg-[#252525]'}`}
+                    className={`flex items-center justify-between py-5 px-3 border-b border-[#e5e5e0] dark:border-[#333] transition-colors cursor-pointer select-none ${isSelected ? 'bg-[#ebebe5] dark:bg-[#252525]' : 'hover:bg-white/40 active:bg-[#ebebe5] dark:active:bg-[#252525]'}`}
+                    style={{ backgroundColor: currentTheme === 'light' ? `${doc.accentColor || '#ffffff'}15` : 'transparent' }}
                   >
                     <div className="flex-1 overflow-hidden pr-4 pointer-events-none">
                       <h3 className="text-[17px] font-serif text-black dark:text-[#eee] mb-1 truncate">
@@ -233,92 +275,142 @@ function Home({ currentTheme, onToggleTheme }) {
         <div 
           className={`bg-white dark:bg-[#1a1a1a] text-black dark:text-white shadow-2xl shadow-black/10 dark:shadow-black/40 border border-[#e5e5e0] dark:border-[#333] transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] relative overflow-hidden ${
             isSelectionMode 
-              ? 'w-[300px] h-[56px] rounded-[28px] px-3 gap-2' 
-              : isMenuOpen
-                ? 'w-[300px] h-[56px] rounded-[28px] px-3'
-                : 'w-[52px] h-[52px] rounded-full'
+              ? 'w-[94vw] max-w-3xl rounded-2xl h-14' 
+              : isColorPickerOpen
+                ? 'w-[280px] rounded-2xl h-14'
+                : isMenuOpen
+                  ? 'w-[300px] rounded-[28px] h-14'
+                  : 'w-[52px] h-[52px] rounded-full'
           }`}
         >
-          {isSelectionMode ? (
-            <div className="flex items-center w-full h-full justify-between fade-in px-1">
-              <button 
-                onClick={() => { setIsSelectionMode(false); setSelectedIds(new Set()); }}
-                className="p-2.5 bg-[#f0f0ea] dark:bg-[#333] hover:bg-[#e5e5e0] dark:hover:bg-[#444] rounded-full transition-colors flex items-center justify-center text-[#666] dark:text-[#ddd] hover:text-black dark:hover:text-white shrink-0 active:scale-95"
-              >
-                <X size={18} strokeWidth={1.5} />
-              </button>
-              <div className="flex items-center gap-1">
-                <button 
-                  onClick={toggleViewMode}
-                  className="p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center text-[#666] dark:text-[#ddd] hover:text-black dark:hover:text-white shrink-0 active:scale-95"
-                  title="Toggle Layout"
-                >
-                  {viewMode === 'list' ? <LayoutGrid size={18} strokeWidth={1.5} /> : <List size={18} strokeWidth={1.5} />}
-                </button>
-                {selectedIds.size === 1 && (
-                  <button 
-                    onClick={handleRename}
-                    className="p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center text-[#666] dark:text-[#ddd] hover:text-black dark:hover:text-white shrink-0 active:scale-95"
-                  >
-                    <Edit3 size={18} strokeWidth={1.5} />
-                  </button>
-                )}
-                <button 
-                  onClick={handleDelete}
-                  className="p-2.5 rounded-full hover:bg-red-500/20 text-red-400 transition-colors flex items-center justify-center shrink-0 active:scale-95"
-                >
-                  <Trash2 size={18} strokeWidth={1.5} />
-                </button>
-              </div>
-            </div>
-          ) : !isMenuOpen ? (
-            <button 
-              onClick={() => setIsMenuOpen(true)}
-              className="w-full h-full flex items-center justify-center active:scale-90 transition-transform"
-              aria-label="Menu"
-            >
-              <LayoutGrid size={24} strokeWidth={1.5} className="text-black dark:text-white" />
+          {/* Color Picker Content */}
+          <div className={`absolute inset-0 flex items-center justify-center gap-3 px-4 transition-all duration-300 ${isColorPickerOpen && !isSelectionMode ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+            <button onClick={() => setIsColorPickerOpen(false)} className="p-1.5 hover:bg-black/5 dark:hover:bg-white/10 rounded-full">
+              <X size={16} />
             </button>
-          ) : (
-            <div className="flex items-center w-full h-full justify-between fade-in px-1">
-              <button 
-                onClick={() => setIsMenuOpen(false)}
-                className="p-2.5 bg-[#f0f0ea] dark:bg-[#333] hover:bg-[#e5e5e0] dark:hover:bg-[#444] rounded-full transition-colors flex items-center justify-center text-[#666] dark:text-[#ddd] hover:text-black dark:hover:text-white shrink-0 active:scale-95"
-              >
-                <X size={18} strokeWidth={1.5} />
-              </button>
-              <div className="flex items-center gap-1">
-                <button 
-                  onClick={toggleViewMode}
-                  className="p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center text-[#666] dark:text-[#ddd] hover:text-black dark:hover:text-white shrink-0 active:scale-95"
-                  title="Toggle Layout"
-                >
-                  {viewMode === 'list' ? <LayoutGrid size={18} strokeWidth={1.5} /> : <List size={18} strokeWidth={1.5} />}
-                </button>
-                <button 
-                  onClick={onToggleTheme}
-                  className="p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center text-[#666] dark:text-[#ddd] hover:text-black dark:hover:text-white shrink-0 active:scale-95"
-                  title="Toggle Theme"
-                >
-                  {currentTheme === 'light' ? <Moon size={18} strokeWidth={1.5} /> : <Sun size={18} strokeWidth={1.5} />}
-                </button>
-                <button 
-                  onClick={() => { setIsSelectionMode(true); setIsMenuOpen(false); }}
-                  className="p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center text-[#666] dark:text-[#ddd] hover:text-black dark:hover:text-white shrink-0 active:scale-95"
-                  title="Select Notes"
-                >
-                  <CheckSquare size={18} strokeWidth={1.5} />
-                </button>
-                <Link 
-                  to="/editor"
-                  className="p-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full hover:bg-[#333] dark:hover:bg-[#eee] transition-colors flex items-center justify-center shrink-0 active:scale-95 ml-1"
-                  title="New Note"
-                >
-                  <Plus size={20} strokeWidth={2.5} />
-                </Link>
-              </div>
+            <div className="flex gap-2.5">
+              {ACCENT_COLORS.map(color => (
+                <button
+                  key={color.name}
+                  onClick={() => {
+                    onUpdateAccent(color.color);
+                    setIsColorPickerOpen(false);
+                  }}
+                  className={`w-6 h-6 rounded-full border-2 transition-transform hover:scale-110 active:scale-95 ${globalAccent === color.color ? 'border-black dark:border-white' : 'border-transparent'}`}
+                  style={{ backgroundColor: color.color }}
+                  title={color.name}
+                />
+              ))}
             </div>
-          )}
+          </div>
+
+          {/* Selection Mode Content */}
+          <div className={`absolute inset-0 flex items-center justify-between px-4 transition-all duration-300 ${isSelectionMode ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+            <button 
+              onClick={() => { setIsSelectionMode(false); setSelectedIds(new Set()); }}
+              className="p-2.5 bg-[#f0f0ea] dark:bg-[#333] hover:bg-[#e5e5e0] dark:hover:bg-[#444] rounded-full transition-colors flex items-center justify-center text-[#666] dark:text-[#ddd] hover:text-black dark:hover:text-white shrink-0 active:scale-95"
+            >
+              <X size={18} strokeWidth={1.5} />
+            </button>
+            <div className="flex items-center gap-1">
+              <button 
+                onClick={toggleViewMode}
+                className="p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center text-[#666] dark:text-[#ddd] hover:text-black dark:hover:text-white shrink-0 active:scale-95"
+                title="Toggle Layout"
+              >
+                {viewMode === 'list' ? <LayoutGrid size={18} strokeWidth={1.5} /> : <List size={18} strokeWidth={1.5} />}
+              </button>
+              {selectedIds.size === 1 && (
+                <button 
+                  onClick={handleRename}
+                  className="p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center text-[#666] dark:text-[#ddd] hover:text-black dark:hover:text-white shrink-0 active:scale-95"
+                >
+                  <Edit3 size={18} strokeWidth={1.5} />
+                </button>
+              )}
+              <button 
+                onClick={handleDelete}
+                className="p-2.5 rounded-full hover:bg-red-500/20 text-red-400 transition-colors flex items-center justify-center shrink-0 active:scale-95"
+              >
+                <Trash2 size={18} strokeWidth={1.5} />
+              </button>
+            </div>
+          </div>
+
+          {/* Default / Menu Mode Content */}
+          <div className={`absolute inset-0 flex items-center justify-between px-2 transition-all duration-300 ${!isSelectionMode && !isColorPickerOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+            {!isMenuOpen ? (
+              <button 
+                onClick={() => setIsMenuOpen(true)}
+                className="w-full h-full flex items-center justify-center active:scale-95 transition-transform"
+                aria-label="Menu"
+              >
+                <LayoutGrid size={24} strokeWidth={1.5} className="text-black dark:text-white" />
+              </button>
+            ) : (
+              <div className="flex items-center w-full h-full justify-between px-1">
+                <button 
+                  onClick={() => setIsMenuOpen(false)}
+                  className="p-2.5 bg-[#f0f0ea] dark:bg-[#333] hover:bg-[#e5e5e0] dark:hover:bg-[#444] rounded-full transition-colors flex items-center justify-center text-[#666] dark:text-[#ddd] hover:text-black dark:hover:text-white shrink-0 active:scale-95"
+                >
+                  <X size={18} strokeWidth={1.5} />
+                </button>
+                <div className="flex items-center gap-1">
+                  <div className="relative flex items-center bg-[#f0f0ea] dark:bg-[#333] p-1 rounded-full">
+                    <div 
+                      className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white dark:bg-[#555] rounded-full shadow-sm transition-transform duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] ${
+                        viewMode === 'list' ? 'translate-x-full' : 'translate-x-0'
+                      }`}
+                    />
+                    <button 
+                      onClick={() => { setViewMode('grid'); localStorage.setItem('readmeMaker_viewMode', 'grid'); }}
+                      className={`relative z-10 p-2 rounded-full transition-colors duration-300 ${viewMode === 'grid' ? 'text-black dark:text-white' : 'text-[#666] dark:text-[#999] hover:text-black dark:hover:text-white'}`}
+                      title="Grid View"
+                    >
+                      <LayoutGrid size={18} strokeWidth={1.5} />
+                    </button>
+                    <button 
+                      onClick={() => { setViewMode('list'); localStorage.setItem('readmeMaker_viewMode', 'list'); }}
+                      className={`relative z-10 p-2 rounded-full transition-colors duration-300 ${viewMode === 'list' ? 'text-black dark:text-white' : 'text-[#666] dark:text-[#999] hover:text-black dark:hover:text-white'}`}
+                      title="List View"
+                    >
+                      <List size={18} strokeWidth={1.5} />
+                    </button>
+                  </div>
+                  <button 
+                    onClick={onToggleTheme}
+                    className="p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center text-[#666] dark:text-[#ddd] hover:text-black dark:hover:text-white shrink-0 active:scale-95"
+                    title="Toggle Theme"
+                  >
+                    {currentTheme === 'light' ? <Moon size={18} strokeWidth={1.5} /> : <Sun size={18} strokeWidth={1.5} />}
+                  </button>
+                  {currentTheme === 'light' && (
+                    <button 
+                      onClick={() => setIsColorPickerOpen(true)}
+                      className="p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center text-[#666] dark:text-[#ddd] hover:text-black dark:hover:text-white shrink-0 active:scale-95"
+                      title="Accent Color"
+                    >
+                      <Palette size={18} strokeWidth={1.5} />
+                    </button>
+                  )}
+                  <button 
+                    onClick={() => { setIsSelectionMode(true); setIsMenuOpen(false); }}
+                    className="p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center text-[#666] dark:text-[#ddd] hover:text-black dark:hover:text-white shrink-0 active:scale-95"
+                    title="Select Notes"
+                  >
+                    <CheckSquare size={18} strokeWidth={1.5} />
+                  </button>
+                  <Link 
+                    to="/editor"
+                    className="p-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full hover:bg-[#333] dark:hover:bg-[#eee] transition-colors flex items-center justify-center shrink-0 active:scale-95 ml-1"
+                    title="New Note"
+                  >
+                    <Plus size={20} strokeWidth={2.5} />
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
