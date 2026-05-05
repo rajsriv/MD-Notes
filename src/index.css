@@ -264,6 +264,103 @@ ul[data-type="taskList"] li[data-checked="true"] > div > p {
   @apply ring-2 ring-[var(--accent-color)] ring-offset-2 dark:ring-offset-black;
 }
 
+/* Staggered Entry Animation */
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.staggered-item {
+  opacity: 0;
+  animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Focus Blur Styles */
+.focus-blur-active .ProseMirror {
+  transition: all 0.4s ease;
+}
+
+.focus-blur-active .ProseMirror > * {
+  transition: opacity 0.4s ease, filter 0.4s ease, transform 0.4s ease;
+}
+
+.focus-blur-active .ProseMirror > *:not(.ProseMirror-focusednode) {
+  opacity: 0.15;
+  filter: blur(4px);
+  transform: scale(0.98);
+}
+
+.focus-blur-active .ProseMirror > .ProseMirror-focusednode {
+  opacity: 1;
+  filter: blur(0);
+  transform: scale(1);
+}
+
+
+
+/* Ink Bleed Effect */
+.ink-bleed-wrap {
+  position: relative;
+  overflow: hidden;
+}
+
+.ink-ripple {
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0);
+  animation: ripple-animation 0.8s ease-out;
+  background-color: rgba(var(--accent-color-rgb), 0.15);
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes ripple-animation {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* Paper Slide Transitions */
+.paper-slide-enter {
+  transform: translateX(30px);
+  opacity: 0;
+}
+.paper-slide-enter-active {
+  transform: translateX(0);
+  opacity: 1;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease;
+}
+
+/* Elastic Easing */
+.ease-elastic {
+  transition-timing-function: cubic-bezier(0.68, -0.6, 0.32, 1.6);
+}
+
+/* Scroll Progress Bar */
+.scroll-progress-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.scroll-progress-bar {
+  height: 100%;
+  background: var(--accent-color);
+  transition: width 0.1s ease-out;
+}
+
+
 /* KaTeX specific overrides for better integration */
 .katex-display {
   margin: 0 !important;

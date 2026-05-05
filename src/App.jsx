@@ -6,11 +6,34 @@ import Editor from './Editor';
 function App() {
   const [currentTheme, setCurrentTheme] = useState(localStorage.getItem('mdnotes_theme') || 'light');
   const [globalAccent, setGlobalAccent] = useState(localStorage.getItem('mdnotes_global_accent') || '#000000');
-  const [globalTextSize, setGlobalTextSize] = useState(() => {
-    const saved = localStorage.getItem('mdnotes_text_size');
-    const parsed = parseInt(saved);
-    return isNaN(parsed) ? 100 : parsed;
+  const [preferences, setPreferences] = useState(() => {
+    const defaultPrefs = {
+      staggeredEntry: true,
+      paperSlide: true,
+      focusBlur: false,
+      elasticMorph: true,
+      scrollProgress: true,
+      inkBleed: true
+    };
+    try {
+      const saved = localStorage.getItem('mdnotes_preferences');
+      if (!saved) return defaultPrefs;
+      const parsed = JSON.parse(saved);
+      return (parsed && typeof parsed === 'object') ? { ...defaultPrefs, ...parsed } : defaultPrefs;
+    } catch (e) {
+      console.error('Failed to parse preferences:', e);
+      return defaultPrefs;
+    }
   });
+
+  useEffect(() => {
+    localStorage.setItem('mdnotes_preferences', JSON.stringify(preferences));
+  }, [preferences]);
+
+  const updatePreference = (key, value) => {
+    setPreferences(prev => ({ ...prev, [key]: value }));
+  };
+
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', currentTheme === 'dark');
@@ -32,10 +55,7 @@ function App() {
     localStorage.setItem('mdnotes_global_accent', globalAccent);
   }, [globalAccent, currentTheme]);
 
-  useEffect(() => {
-    document.documentElement.style.setProperty('--base-font-size', `${globalTextSize}%`);
-    localStorage.setItem('mdnotes_text_size', globalTextSize.toString());
-  }, [globalTextSize]);
+
 
   const toggleTheme = () => {
     setCurrentTheme(prev => (prev === 'light' ? 'dark' : 'light'));
@@ -45,16 +65,14 @@ function App() {
     setGlobalAccent(color);
   };
 
-  const updateGlobalTextSize = (size) => {
-    setGlobalTextSize(size);
-  };
+
 
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Home currentTheme={currentTheme} onToggleTheme={toggleTheme} globalAccent={globalAccent} onUpdateAccent={updateGlobalAccent} globalTextSize={globalTextSize} onUpdateTextSize={updateGlobalTextSize} />} />
-        <Route path="/editor" element={<Editor currentTheme={currentTheme} onToggleTheme={toggleTheme} globalAccent={globalAccent} onUpdateAccent={updateGlobalAccent} globalTextSize={globalTextSize} onUpdateTextSize={updateGlobalTextSize} />} />
-        <Route path="/editor/:id" element={<Editor currentTheme={currentTheme} onToggleTheme={toggleTheme} globalAccent={globalAccent} onUpdateAccent={updateGlobalAccent} globalTextSize={globalTextSize} onUpdateTextSize={updateGlobalTextSize} />} />
+        <Route path="/" element={<Home currentTheme={currentTheme} onToggleTheme={toggleTheme} globalAccent={globalAccent} onUpdateAccent={updateGlobalAccent} preferences={preferences} onUpdatePreference={updatePreference} />} />
+        <Route path="/editor" element={<Editor currentTheme={currentTheme} onToggleTheme={toggleTheme} globalAccent={globalAccent} onUpdateAccent={updateGlobalAccent} preferences={preferences} onUpdatePreference={updatePreference} />} />
+        <Route path="/editor/:id" element={<Editor currentTheme={currentTheme} onToggleTheme={toggleTheme} globalAccent={globalAccent} onUpdateAccent={updateGlobalAccent} preferences={preferences} onUpdatePreference={updatePreference} />} />
       </Routes>
     </BrowserRouter>
   );

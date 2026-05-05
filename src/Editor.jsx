@@ -9,11 +9,13 @@ import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Toolbar from './Toolbar';
 import CodeOutput from './CodeOutput';
-import { Save, ChevronLeft, Type, X, Sun, Moon, Copy, Check, Palette, BookOpen, Eye, EyeOff, Sigma } from 'lucide-react';
+import { Save, ChevronLeft, Type, X, Sun, Moon, Copy, Check, Palette, BookOpen, Eye, EyeOff, Sigma, Settings } from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
 import Dialog from './Dialog';
-import { Node, InputRule, mergeAttributes, PasteRule } from '@tiptap/core';
+import SettingsMenu from './SettingsMenu';
+import { Node, InputRule, mergeAttributes, PasteRule, Extension } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
+import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 const Mathematics = Node.create({
@@ -188,6 +190,40 @@ const Mathematics = Node.create({
   },
 });
 
+const FocusBlur = Extension.create({
+  name: 'focusBlur',
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: new PluginKey('focus-blur'),
+        props: {
+          decorations: (state) => {
+            const { selection } = state;
+            const decorations = [];
+
+            const $pos = state.doc.resolve(selection.from);
+            const depth = $pos.depth;
+            
+            if (depth > 0) {
+              const pos = $pos.before(1);
+              const node = state.doc.nodeAt(pos);
+              if (node) {
+                decorations.push(
+                  Decoration.node(pos, pos + node.nodeSize, {
+                    class: 'ProseMirror-focusednode',
+                  }),
+                );
+              }
+            }
+
+            return DecorationSet.create(state.doc, decorations);
+          },
+        },
+      }),
+    ];
+  },
+});
+
 const DEFAULT_MARKDOWN = `# Welcome to MD-Notes ✨
 A beautifully crafted, **distraction-free** Markdown workspace for your thoughts, ideas, and code snippets.
 ## Features
@@ -207,7 +243,12 @@ function captureIdea(idea) {
 - [ ] Jot down some brilliant ideas
 > "The palest ink is better than the best memory."
 `;
-function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, globalTextSize, onUpdateTextSize }) {
+function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, preferences, onUpdatePreference }) {
+  const [textSize, setTextSize] = useState(100);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [ripples, setRipples] = useState([]);
+  const editorScrollRef = useRef(null);
   const { id } = useParams();
   const navigate = useNavigate();
   const initialContent = useMemo(() => {
@@ -219,8 +260,8 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, glo
   const [title, setTitle] = useState('');
   const [activeTab, setActiveTab] = useState('editor');
   const [isToolbarExpanded, setIsToolbarExpanded] = useState(false);
-  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+
   const [copied, setCopied] = useState(false);
   const [noteAccent, setNoteAccent] = useState(null);
   const [isReadingMode, setIsReadingMode] = useState(false);
@@ -244,11 +285,12 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, glo
       TaskList,
       TaskItem.configure({ nested: true }),
       Mathematics,
+      FocusBlur,
     ],
     content: initialContent,
     contentType: 'markdown',
     editorProps: {
-      class: 'focus:outline-none min-h-full px-6 markdown-preview pb-40 pt-0',
+      class: `focus:outline-none min-h-full px-6 markdown-preview pb-40 pt-0 ${preferences.focusBlur ? 'focus-blur-active' : ''}`,
     },
     onUpdate: ({ editor }) => {
       setMarkdown(editor.getMarkdown());
@@ -309,6 +351,52 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, glo
       }
     };
   }, [noteAccent, globalAccent, currentTheme]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!preferences.scrollProgress || !editorScrollRef.current) return;
+      const element = editorScrollRef.current;
+      const totalHeight = element.scrollHeight - element.clientHeight;
+      const windowScrollTop = element.scrollTop;
+      if (totalHeight === 0) {
+        setScrollProgress(0);
+        return;
+      }
+      const currentProgress = (windowScrollTop / totalHeight) * 100;
+      setScrollProgress(currentProgress);
+    };
+
+    const scrollEl = editorScrollRef.current;
+    if (scrollEl) {
+      scrollEl.addEventListener('scroll', handleScroll);
+    }
+    return () => {
+      if (scrollEl) {
+        scrollEl.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, [preferences.scrollProgress, activeTab]);
+
+  const createRipple = (e) => {
+    if (!preferences.inkBleed) return;
+    const button = e.currentTarget;
+    const rect = button.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    const x = e.clientX - rect.left - size / 2;
+    const y = e.clientY - rect.top - size / 2;
+    
+    const newRipple = {
+      id: Date.now(),
+      x,
+      y,
+      size
+    };
+    
+    setRipples(prev => [...prev, newRipple]);
+    setTimeout(() => {
+      setRipples(prev => prev.filter(r => r.id !== newRipple.id));
+    }, 800);
+  };
 
   const handleRename = () => {
     setDialogConfig({
@@ -391,6 +479,21 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, glo
   return (
     <div className="h-screen w-full flex flex-col bg-[var(--bg-color)] transition-colors duration-300 text-[#111] dark:text-[#eee] overflow-hidden relative selection:bg-[var(--accent-color)]/20">
       <Dialog {...dialogConfig} onCancel={closeDialog} />
+      <SettingsMenu 
+        isOpen={isSettingsOpen} 
+        onClose={() => setIsSettingsOpen(false)}
+        currentTheme={currentTheme}
+        onToggleTheme={onToggleTheme}
+        globalAccent={globalAccent}
+        onUpdateAccent={onUpdateAccent}
+        preferences={preferences}
+        onUpdatePreference={onUpdatePreference}
+      />
+      {preferences.scrollProgress && activeTab === 'editor' && (
+        <div className="scroll-progress-container">
+          <div className="scroll-progress-bar" style={{ width: `${scrollProgress}%` }} />
+        </div>
+      )}
       <div
         className="absolute top-0 left-0 right-0 h-28 z-20 pointer-events-none transition-colors duration-300"
         style={{
@@ -405,7 +508,7 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, glo
           to="/"
           className="p-2 text-[#555] dark:text-[#999] hover:text-black dark:hover:text-white transition-colors pointer-events-auto"
         >
-          <ChevronLeft size={28} strokeWidth={1.5} />
+          <ChevronLeft size={24} strokeWidth={1.5} />
         </RouterLink>
         <button
           onClick={handleRename}
@@ -442,14 +545,14 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, glo
             : 'transparent' 
         }}
       >
-        <div className={`flex-1 flex flex-col h-full absolute inset-0 transition-opacity duration-200 ${activeTab === 'editor' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}>
-          <main className="flex-1 overflow-auto px-6 z-10 no-scrollbar pb-52 pt-20 max-w-2xl mx-auto w-full">
-            <div className="markdown-preview focus:outline-none">
+        <div className={`flex-1 flex flex-col h-full absolute inset-0 transition-all duration-500 ${activeTab === 'editor' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'} ${preferences.paperSlide && activeTab === 'code' ? '-translate-x-10' : 'translate-x-0'}`}>
+          <main ref={editorScrollRef} className="flex-1 overflow-auto px-6 z-10 no-scrollbar pb-52 pt-20 max-w-2xl mx-auto w-full">
+            <div className="markdown-preview focus:outline-none" style={{ fontSize: `${textSize}%` }}>
               <EditorContent editor={editor} />
             </div>
           </main>
         </div>
-        <div className={`flex-1 flex flex-col h-full absolute inset-0 transition-opacity duration-200 ${activeTab === 'code' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}>
+        <div className={`flex-1 flex flex-col h-full absolute inset-0 transition-all duration-500 ${activeTab === 'code' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'} ${preferences.paperSlide && activeTab === 'editor' ? 'translate-x-10' : 'translate-x-0'}`}>
           <div className="pt-20 pb-52 h-full flex flex-col px-4">
             <CodeOutput markdown={markdown} setMarkdown={setMarkdown} editor={editor} />
           </div>
@@ -465,35 +568,34 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, glo
         }}
       />
       {!isReadingMode && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center">
+        <div className="fixed bottom-0 left-0 right-0 z-40 flex flex-col items-center">
         <div
-          className={`bg-white dark:bg-[#1a1a1a] text-black dark:text-white shadow-2xl shadow-black/10 dark:shadow-black/40 border border-[#e5e5e0] dark:border-[#333] transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] relative overflow-hidden ${isToolbarExpanded
-            ? 'w-[94vw] max-w-3xl rounded-2xl h-14'
-            : isColorPickerOpen
-              ? 'w-[280px] rounded-2xl h-14'
-              : 'w-[360px] rounded-full h-[54px]'
+          className={`bg-white dark:bg-[#1a1a1a] text-black dark:text-white shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.15)] dark:shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.5)] transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] relative ${preferences.elasticMorph ? 'ease-elastic' : ''} ${isToolbarExpanded
+            ? 'w-full h-12'
+            : 'w-[240px] rounded-t-2xl h-11 shadow-2xl border-x border-t border-[#e5e5e0] dark:border-[#333]'
             }`}
         >
-          {/* Color Picker Content */}
-          <div className={`absolute inset-0 flex items-center justify-center gap-3 px-4 transition-all duration-300 ${isColorPickerOpen && !isToolbarExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-            <button onClick={() => setIsColorPickerOpen(false)} className="p-1.5 hover:bg-black/5 dark:hover:bg-white/10 rounded-full">
-              <X size={16} />
-            </button>
-            <div className="flex gap-2.5">
-              {ACCENT_COLORS.map(color => (
-                <button
-                  key={color.name}
-                  onClick={() => handleUpdateNoteAccent(color.color)}
-                  className={`w-6 h-6 rounded-full border-2 transition-transform hover:scale-110 active:scale-95 ${(noteAccent || globalAccent) === color.color ? 'border-black dark:border-white' : 'border-transparent'}`}
-                  style={{ backgroundColor: color.color }}
-                  title={color.name}
-                />
-              ))}
-            </div>
-          </div>
+          {/* Inverted Corners (Outward Curves) */}
+          {isToolbarExpanded && (
+            <>
+              {/* Top-left curve to edge */}
+              <div className="absolute left-0 w-5 h-5 pointer-events-none transition-opacity duration-300 delay-500 animate-in fade-in fill-mode-forwards" style={{ top: '-19.5px' }}>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-white dark:text-[#1a1a1a]">
+                  <path d="M0 20 L0 0 C0 11.0457 8.9543 20 20 20 Z" fill="currentColor" />
+                </svg>
+              </div>
+              {/* Top-right curve to edge */}
+              <div className="absolute right-0 w-5 h-5 pointer-events-none transition-opacity duration-300 delay-500 animate-in fade-in fill-mode-forwards" style={{ top: '-19.5px' }}>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-white dark:text-[#1a1a1a]">
+                  <path d="M20 20 L20 0 C20 11.0457 11.0457 20 0 20 Z" fill="currentColor" />
+                </svg>
+              </div>
+            </>
+          )}
+
 
           <div
-            className={`absolute inset-0 flex items-center justify-between px-3 transition-all duration-400 ${isToolbarExpanded || isColorPickerOpen ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100 delay-100'
+            className={`absolute inset-0 flex items-center justify-between px-3 transition-all duration-400 ${isToolbarExpanded ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100 delay-100'
               }`}
           >
             <div className="relative flex items-center bg-[#f0f0ea] dark:bg-[#252525] p-1 rounded-full">
@@ -505,49 +607,35 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, glo
               />
               <button
                 onClick={() => setActiveTab('editor')}
-                className={`relative z-10 px-4 py-1.5 rounded-full text-[13px] font-medium transition-all duration-300 ${activeTab === 'editor' ? 'text-black dark:text-white' : 'text-[#666] dark:text-[#999] hover:text-black dark:hover:text-white'}`}
+                className={`relative z-10 px-3 py-1 rounded-full text-[12px] font-medium transition-all duration-300 ${activeTab === 'editor' ? 'text-black dark:text-white' : 'text-[#666] dark:text-[#999] hover:text-black dark:hover:text-white'}`}
               >
                 Read
               </button>
               {!isReadingMode && (
                 <button
                   onClick={() => setActiveTab('code')}
-                  className={`relative z-10 px-4 py-1.5 rounded-full text-[13px] font-medium transition-all duration-300 ${activeTab === 'code' ? 'text-black dark:text-white' : 'text-[#666] dark:text-[#999] hover:text-black dark:hover:text-white'}`}
+                  className={`relative z-10 px-3 py-1 rounded-full text-[12px] font-medium transition-all duration-300 ${activeTab === 'code' ? 'text-black dark:text-white' : 'text-[#666] dark:text-[#999] hover:text-black dark:hover:text-white'}`}
                 >
                   Code
                 </button>
               )}
             </div>
-            {currentTheme === 'light' && (
+            <div className="flex items-center gap-1">
               <button
-                onClick={() => setIsColorPickerOpen(true)}
-                className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center text-[#666] dark:text-[#ddd] hover:text-black dark:hover:text-white shrink-0"
-                title="Note Accent"
+                onClick={handleCopy}
+                className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center text-[#666] dark:text-[#ddd] hover:text-black dark:hover:text-white shrink-0"
+                title="Copy Markdown"
               >
-                <Palette size={18} strokeWidth={1.5} />
+                {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} strokeWidth={1.5} />}
               </button>
-            )}
-            <button
-              onClick={onToggleTheme}
-              className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center text-[#666] dark:text-[#ddd] hover:text-black dark:hover:text-white shrink-0"
-              title="Toggle Theme"
-            >
-              {currentTheme === 'light' ? <Moon size={18} strokeWidth={1.5} /> : <Sun size={18} strokeWidth={1.5} />}
-            </button>
-            <button
-              onClick={handleCopy}
-              className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center text-[#666] dark:text-[#ddd] hover:text-black dark:hover:text-white shrink-0"
-              title="Copy Markdown"
-            >
-              {copied ? <Check size={18} className="text-green-500" /> : <Copy size={18} strokeWidth={1.5} />}
-            </button>
-            <button
-              onClick={() => setIsToolbarExpanded(true)}
-              className="p-2 ml-0.5 rounded-full hover:bg-[#f0f0ea] dark:hover:bg-[#333] transition-colors flex items-center justify-center text-black dark:text-white shrink-0"
-              aria-label="Formatting Tools"
-            >
-              <Type size={18} strokeWidth={1.5} />
-            </button>
+              <button
+                onClick={() => setIsToolbarExpanded(true)}
+                className="p-1.5 ml-0.5 rounded-full hover:bg-[#f0f0ea] dark:hover:bg-[#333] transition-colors flex items-center justify-center text-black dark:text-white shrink-0"
+                aria-label="Formatting Tools"
+              >
+                <Type size={16} strokeWidth={1.5} />
+              </button>
+            </div>
           </div>
           <div
             className={`absolute inset-0 flex items-center w-full px-1 transition-all duration-400 ${isToolbarExpanded ? 'opacity-100 scale-100 delay-100' : 'opacity-0 scale-105 pointer-events-none'
@@ -558,8 +646,8 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, glo
                 editor={editor}
                 setExternalDialog={setDialogConfig}
                 closeExternalDialog={closeDialog}
-                globalTextSize={globalTextSize}
-                onUpdateTextSize={onUpdateTextSize}
+                textSize={textSize}
+                onUpdateTextSize={setTextSize}
               />
             </div>
             <button
