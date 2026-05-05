@@ -33,8 +33,9 @@ function Toolbar({ editor }) {
     setDialogConfig({
       isOpen: true,
       type: 'prompt',
-      title: 'Insert Image URL',
+      title: 'Insert Image',
       defaultValue: '',
+      showUploadOption: true,
       onConfirm: (url) => {
         if (url) {
           editor.chain().focus().setImage({ src: url }).run();
