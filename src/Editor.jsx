@@ -131,15 +131,34 @@ function Editor({ currentTheme, onToggleTheme }) {
       navigate(`/editor/${newId}`);
     }
   };
-  const handleDownload = () => {
+  const handleDownload = async () => {
     const content = editor ? editor.getMarkdown() : markdown;
     if (!content) return;
+
+    const fileName = `${title || 'README'}.md`;
+
+    // Try Web Share API first (native mobile experience)
+    if (navigator.share) {
+      try {
+        const file = new File([content], fileName, { type: 'text/markdown' });
+        
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: title || 'MD Note',
+          });
+          return;
+        }
+      } catch (err) {
+        console.log('Share skipped or failed, falling back to download');
+      }
+    }
 
     const blob = new Blob([content], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${title || 'README'}.md`;
+    a.download = fileName;
     document.body.appendChild(a);
     a.click();
     

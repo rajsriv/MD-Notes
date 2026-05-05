@@ -91,29 +91,53 @@ function Home({ currentTheme, onToggleTheme }) {
       }
     });
   };
-  const handleDownload = () => {
+  const handleDownload = async () => {
     const idsToDownload = Array.from(selectedIds);
-    
-    idsToDownload.forEach((id, index) => {
-      const doc = docs.find(d => d.id === id);
-      if (doc) {
-        // Stagger downloads to prevent browser blocking
-        setTimeout(() => {
-          const blob = new Blob([doc.content], { type: 'text/markdown' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `${doc.title || 'Untitled'}.md`;
-          document.body.appendChild(a);
-          a.click();
-          
-          // Cleanup
-          setTimeout(() => {
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-          }, 100);
-        }, index * 200); // 200ms delay between each file
+    const docsToShare = idsToDownload.map(id => docs.find(d => d.id === id)).filter(Boolean);
+
+    if (docsToShare.length === 0) return;
+
+    // Try Web Share API first (native mobile experience)
+    if (navigator.share) {
+      try {
+        const files = docsToShare.map(doc => {
+          return new File([doc.content], `${doc.title || 'Untitled'}.md`, { type: 'text/markdown' });
+        });
+
+        // Check if browser can share files
+        if (navigator.canShare && navigator.canShare({ files })) {
+          await navigator.share({
+            files,
+            title: 'MD-Notes',
+          });
+          setIsSelectionMode(false);
+          setSelectedIds(new Set());
+          return;
+        }
+      } catch (err) {
+        // User cancelled or share failed, fallback to download
+        console.log('Share skipped or failed, falling back to download');
       }
+    }
+
+    // Fallback: Individual staggered downloads
+    docsToShare.forEach((doc, index) => {
+      // Stagger downloads to prevent browser blocking
+      setTimeout(() => {
+        const blob = new Blob([doc.content], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${doc.title || 'Untitled'}.md`;
+        document.body.appendChild(a);
+        a.click();
+        
+        // Cleanup
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 100);
+      }, index * 200); // 200ms delay between each file
     });
 
     // Reset selection after starting the process

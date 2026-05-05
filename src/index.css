@@ -12,6 +12,11 @@
 @tailwind utilities;
 
 @layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+    @apply focus:outline-none;
+  }
+  
   body {
     @apply bg-[var(--bg-color)] text-[#1a1a1a] antialiased selection:bg-orange-200 transition-colors duration-300;
     @apply dark:text-[#e0e0e0] dark:selection:bg-blue-900;
