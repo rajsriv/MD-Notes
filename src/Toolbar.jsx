@@ -64,7 +64,7 @@ function Toolbar({ editor, setExternalDialog, closeExternalDialog }) {
     <div className="flex items-center gap-1 overflow-x-auto no-scrollbar px-1">
       {tools.map((tool, index) => {
         if (tool.divider) {
-          return <div key={index} className="w-[1px] h-5 bg-[#444] mx-1.5 flex-shrink-0" />;
+          return <div key={index} className="w-[1px] h-5 bg-[#e5e5e0] dark:bg-[#444] mx-1.5 flex-shrink-0" />;
         }
         return (
           <button
@@ -73,8 +73,8 @@ function Toolbar({ editor, setExternalDialog, closeExternalDialog }) {
             onClick={tool.action}
             className={`p-1.5 rounded-full transition-colors flex-shrink-0 active:scale-95 ${
               tool.isActive 
-                ? 'text-black bg-white shadow-sm' 
-                : 'text-[#aaa] hover:text-white hover:bg-white/10'
+                ? 'text-white bg-black dark:text-black dark:bg-white shadow-sm' 
+                : 'text-[#666] dark:text-[#aaa] hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10'
             }`}
             aria-label={tool.label}
           >

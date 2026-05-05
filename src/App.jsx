@@ -26,8 +26,8 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home currentTheme={theme} onToggleTheme={toggleTheme} />} />
-        <Route path="/editor" element={<Editor currentTheme={theme} />} />
-        <Route path="/editor/:id" element={<Editor currentTheme={theme} />} />
+        <Route path="/editor" element={<Editor currentTheme={theme} onToggleTheme={toggleTheme} />} />
+        <Route path="/editor/:id" element={<Editor currentTheme={theme} onToggleTheme={toggleTheme} />} />
       </Routes>
     </BrowserRouter>
   );

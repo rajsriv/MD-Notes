@@ -4,12 +4,13 @@ A premium, e-book inspired WYSIWYG Markdown editor. Built for clarity, focus, an
 
 ## ✨ Features
 
+- **Comprehensive Dark Mode**: A deep, high-contrast dark theme that respects system preferences and persists user choice across sessions.
 - **Bidirectional Editing**: Switch between a visual Tiptap-powered editor and raw Markdown syntax with live synchronization.
-- **E-Book Aesthetics**: A refined UI inspired by modern e-readers, featuring soft beige backgrounds, crisp typography, and glassmorphism.
-- **Masonry Layout**: A dynamic grid for organizing your notes visually.
-- **Premium Navigation**: Smooth top-blur headers and an intuitive onboarding tour for new users.
-- **Responsive Design**: Fully optimized for mobile (Android/Capacitor) and desktop workflows.
-- **Export Ready**: Copy raw Markdown or export your formatted notes instantly.
+- **E-Book Aesthetics**: A refined UI inspired by modern e-readers, featuring a premium light-beige theme, crisp typography, and subtle micro-animations.
+- **Notch Nook Navigation**: A floating, theme-aware navigation capsule for quick access to tools, theme toggles, and layout settings.
+- **Masonry Layout**: A dynamic grid for organizing your notes visually with a premium masonry effect.
+- **Responsive & Native**: Fully optimized for mobile (Android/Capacitor) with smooth transitions and haptic-ready interactions.
+- **Export Ready**: Copy raw Markdown or download your notes as `.md` files instantly.
 
 ## 🚀 Tech Stack
 

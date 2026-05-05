@@ -13,7 +13,7 @@ function CodeOutput({ markdown, setMarkdown, editor }) {
   return (
     <div className="flex-1 overflow-hidden flex flex-col relative bg-transparent">
       <div className="p-4 flex justify-center flex-shrink-0 z-10 border-b border-[#e5e5e0] dark:border-[#333] mb-4">
-        <div className="relative flex items-center bg-[#e0e0dc] dark:bg-[#333] rounded-full w-full max-w-xs shadow-inner p-1 transition-colors">
+        <div className="relative flex items-center bg-[#f0f0ea] dark:bg-[#333] rounded-full w-full max-w-xs shadow-inner p-1 transition-colors">
           <div 
             className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white dark:bg-[#555] rounded-full shadow-sm transition-transform duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] ${
               isEditing ? 'translate-x-full' : 'translate-x-0'
@@ -38,12 +38,12 @@ function CodeOutput({ markdown, setMarkdown, editor }) {
           <textarea
             value={markdown}
             onChange={handleChange}
-            className="flex-1 w-full h-full min-h-[500px] bg-transparent text-sm font-mono text-[#333] dark:text-[#eee] resize-none focus:outline-none custom-scrollbar leading-relaxed"
+            className="flex-1 w-full h-full min-h-[500px] bg-transparent text-[15px] font-mono text-[#1a1a1a] dark:text-[#eee] resize-none focus:outline-none custom-scrollbar leading-relaxed"
             placeholder="Type your markdown here..."
             spellCheck="false"
           />
         ) : (
-          <pre className="text-[13px] font-mono text-[#444] dark:text-[#ccc] whitespace-pre-wrap break-words leading-relaxed max-w-2xl mx-auto w-full transition-colors">
+          <pre className="text-[14px] font-mono text-[#222] dark:text-[#ccc] whitespace-pre-wrap break-words leading-relaxed max-w-2xl mx-auto w-full transition-colors">
             {markdown || 'Your markdown code will appear here...'}
           </pre>
         )}

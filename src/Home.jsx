@@ -203,7 +203,7 @@ function Home({ currentTheme, onToggleTheme }) {
                           </p>
                         </div>
                         {isSelectionMode && (
-                          isSelected ? <CheckCircle2 size={16} className="text-black flex-shrink-0" /> : <Circle size={16} className="text-[#ccc] flex-shrink-0" />
+                          isSelected ? <CheckCircle2 size={16} className="text-black dark:text-white flex-shrink-0" /> : <Circle size={16} className="text-[#ccc] flex-shrink-0" />
                         )}
                       </div>
                     </div>
@@ -228,7 +228,7 @@ function Home({ currentTheme, onToggleTheme }) {
                       </p>
                     </div>
                     {isSelectionMode ? (
-                      isSelected ? <CheckCircle2 size={20} className="text-black flex-shrink-0" /> : <Circle size={20} className="text-[#ccc] flex-shrink-0" />
+                      isSelected ? <CheckCircle2 size={20} className="text-black dark:text-white flex-shrink-0" /> : <Circle size={20} className="text-[#ccc] flex-shrink-0" />
                     ) : (
                       <ChevronRight size={18} className="text-[#ccc] flex-shrink-0" />
                     )}
@@ -249,7 +249,7 @@ function Home({ currentTheme, onToggleTheme }) {
 
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center">
         <div 
-          className={`bg-[#1a1a1a] text-white shadow-2xl shadow-black/30 border border-[#333] transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] relative overflow-hidden ${
+          className={`bg-white dark:bg-[#1a1a1a] text-black dark:text-white shadow-2xl shadow-black/10 dark:shadow-black/40 border border-[#e5e5e0] dark:border-[#333] transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] relative overflow-hidden ${
             isSelectionMode 
               ? 'w-[300px] h-[56px] rounded-[28px] px-3 gap-2' 
               : isMenuOpen
@@ -261,14 +261,14 @@ function Home({ currentTheme, onToggleTheme }) {
             <div className="flex items-center w-full h-full justify-between fade-in px-1">
               <button 
                 onClick={() => { setIsSelectionMode(false); setSelectedIds(new Set()); }}
-                className="p-2.5 bg-[#333] hover:bg-[#444] rounded-full transition-colors flex items-center justify-center text-[#ddd] hover:text-white shrink-0 active:scale-95"
+                className="p-2.5 bg-[#f0f0ea] dark:bg-[#333] hover:bg-[#e5e5e0] dark:hover:bg-[#444] rounded-full transition-colors flex items-center justify-center text-[#666] dark:text-[#ddd] hover:text-black dark:hover:text-white shrink-0 active:scale-95"
               >
                 <X size={18} strokeWidth={1.5} />
               </button>
               <div className="flex items-center gap-1">
                 <button 
                   onClick={toggleViewMode}
-                  className="p-2.5 rounded-full hover:bg-white/10 transition-colors flex items-center justify-center text-[#ddd] hover:text-white shrink-0 active:scale-95"
+                  className="p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center text-[#666] dark:text-[#ddd] hover:text-black dark:hover:text-white shrink-0 active:scale-95"
                   title="Toggle Layout"
                 >
                   {viewMode === 'list' ? <LayoutGrid size={18} strokeWidth={1.5} /> : <List size={18} strokeWidth={1.5} />}
@@ -276,14 +276,14 @@ function Home({ currentTheme, onToggleTheme }) {
                 {selectedIds.size === 1 && (
                   <button 
                     onClick={handleRename}
-                    className="p-2.5 rounded-full hover:bg-white/10 transition-colors flex items-center justify-center text-[#ddd] hover:text-white shrink-0 active:scale-95"
+                    className="p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center text-[#666] dark:text-[#ddd] hover:text-black dark:hover:text-white shrink-0 active:scale-95"
                   >
                     <Edit3 size={18} strokeWidth={1.5} />
                   </button>
                 )}
                 <button 
                   onClick={handleDownload}
-                  className="p-2.5 rounded-full hover:bg-white/10 transition-colors flex items-center justify-center text-[#ddd] hover:text-white shrink-0 active:scale-95"
+                  className="p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center text-[#666] dark:text-[#ddd] hover:text-black dark:hover:text-white shrink-0 active:scale-95"
                 >
                   <Download size={18} strokeWidth={1.5} />
                 </button>
@@ -301,41 +301,41 @@ function Home({ currentTheme, onToggleTheme }) {
               className="w-full h-full flex items-center justify-center active:scale-90 transition-transform"
               aria-label="Menu"
             >
-              <LayoutGrid size={24} strokeWidth={1.5} className="text-white" />
+              <LayoutGrid size={24} strokeWidth={1.5} className="text-black dark:text-white" />
             </button>
           ) : (
             <div className="flex items-center w-full h-full justify-between fade-in px-1">
               <button 
                 onClick={() => setIsMenuOpen(false)}
-                className="p-2.5 bg-[#333] hover:bg-[#444] rounded-full transition-colors flex items-center justify-center text-[#ddd] hover:text-white shrink-0 active:scale-95"
+                className="p-2.5 bg-[#f0f0ea] dark:bg-[#333] hover:bg-[#e5e5e0] dark:hover:bg-[#444] rounded-full transition-colors flex items-center justify-center text-[#666] dark:text-[#ddd] hover:text-black dark:hover:text-white shrink-0 active:scale-95"
               >
                 <X size={18} strokeWidth={1.5} />
               </button>
               <div className="flex items-center gap-1">
                 <button 
                   onClick={toggleViewMode}
-                  className="p-2.5 rounded-full hover:bg-white/10 transition-colors flex items-center justify-center text-[#ddd] hover:text-white shrink-0 active:scale-95"
+                  className="p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center text-[#666] dark:text-[#ddd] hover:text-black dark:hover:text-white shrink-0 active:scale-95"
                   title="Toggle Layout"
                 >
                   {viewMode === 'list' ? <LayoutGrid size={18} strokeWidth={1.5} /> : <List size={18} strokeWidth={1.5} />}
                 </button>
                 <button 
                   onClick={onToggleTheme}
-                  className="p-2.5 rounded-full hover:bg-white/10 transition-colors flex items-center justify-center text-[#ddd] hover:text-white shrink-0 active:scale-95"
+                  className="p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center text-[#666] dark:text-[#ddd] hover:text-black dark:hover:text-white shrink-0 active:scale-95"
                   title="Toggle Theme"
                 >
                   {currentTheme === 'light' ? <Moon size={18} strokeWidth={1.5} /> : <Sun size={18} strokeWidth={1.5} />}
                 </button>
                 <button 
                   onClick={() => { setIsSelectionMode(true); setIsMenuOpen(false); }}
-                  className="p-2.5 rounded-full hover:bg-white/10 transition-colors flex items-center justify-center text-[#ddd] hover:text-white shrink-0 active:scale-95"
+                  className="p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center text-[#666] dark:text-[#ddd] hover:text-black dark:hover:text-white shrink-0 active:scale-95"
                   title="Select Notes"
                 >
                   <CheckSquare size={18} strokeWidth={1.5} />
                 </button>
                 <Link 
                   to="/editor"
-                  className="p-2.5 bg-white text-black rounded-full hover:bg-[#eee] transition-colors flex items-center justify-center shrink-0 active:scale-95 ml-1"
+                  className="p-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full hover:bg-[#333] dark:hover:bg-[#eee] transition-colors flex items-center justify-center shrink-0 active:scale-95 ml-1"
                   title="New Note"
                 >
                   <Plus size={20} strokeWidth={2.5} />

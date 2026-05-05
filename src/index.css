@@ -38,12 +38,12 @@
   @apply bg-[#b4b4b0] dark:bg-[#444];
 }
 .markdown-preview {
-  @apply font-serif text-[1.1rem] leading-[1.8] text-gray-800 dark:text-gray-300 max-w-2xl mx-auto pb-32 pt-20 transition-colors duration-300;
+  @apply font-serif text-[1.1rem] leading-[1.8] text-gray-800 dark:text-gray-300 max-w-2xl mx-auto pb-32 pt-0 transition-colors duration-300;
 }
 .markdown-preview h1,
 .markdown-preview h2,
 .markdown-preview h3 {
-  @apply font-sans font-bold text-black dark:text-white tracking-tight mb-6 mt-10 transition-colors duration-300;
+  @apply font-sans font-bold text-black dark:text-white tracking-tight mb-6 mt-4 transition-colors duration-300;
 }
 .markdown-preview h1 {
   @apply text-3xl md:text-4xl;
