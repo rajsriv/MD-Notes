@@ -119,12 +119,12 @@ function Home({ currentTheme, onToggleTheme }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[var(--bg-color)] transition-colors duration-300 relative overflow-x-hidden">
+    <div className="h-screen flex flex-col bg-[var(--bg-color)] transition-colors duration-300 relative overflow-hidden">
       {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
       <Dialog {...dialogConfig} onCancel={closeDialog} />
       
       <div 
-        className="absolute top-0 left-0 right-0 h-[280px] z-20 pointer-events-none transition-colors duration-300"
+        className="fixed top-0 left-0 right-0 h-[280px] z-20 pointer-events-none transition-colors duration-300"
         style={{
            background: 'linear-gradient(to bottom, var(--bg-color) 241px, transparent 100%)',
            backdropFilter: 'blur(12px)',
@@ -133,7 +133,7 @@ function Home({ currentTheme, onToggleTheme }) {
         }}
       />
       
-      <div className="absolute top-0 left-0 right-0 z-30 pointer-events-none">
+      <div className="fixed top-0 left-0 right-0 z-30 pointer-events-none">
         <header className="pt-16 pb-4 px-8 flex flex-col items-start max-w-2xl mx-auto w-full pointer-events-auto">
           <h1 className="text-4xl font-serif text-black dark:text-white mb-2 tracking-tight">
             MD-Notes
@@ -229,7 +229,7 @@ function Home({ currentTheme, onToggleTheme }) {
         />
       )}
 
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center">
+      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center">
         <div 
           className={`bg-white dark:bg-[#1a1a1a] text-black dark:text-white shadow-2xl shadow-black/10 dark:shadow-black/40 border border-[#e5e5e0] dark:border-[#333] transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] relative overflow-hidden ${
             isSelectionMode 

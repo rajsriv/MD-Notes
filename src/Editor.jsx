@@ -199,7 +199,7 @@ function Editor({ currentTheme, onToggleTheme }) {
         }}
       />
       { }
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center">
+      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center">
         <div
           className={`bg-white dark:bg-[#1a1a1a] text-black dark:text-white shadow-2xl shadow-black/10 dark:shadow-black/40 border border-[#e5e5e0] dark:border-[#333] transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] relative overflow-hidden ${isToolbarExpanded
             ? 'w-[94vw] max-w-3xl rounded-2xl h-14'
