@@ -137,7 +137,7 @@ function Home({ currentTheme, onToggleTheme }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <div className="h-screen w-full flex flex-col relative overflow-hidden bg-transparent">
+    <div className="min-h-screen bg-[var(--bg-color)] transition-colors duration-300 relative overflow-x-hidden">
       {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
       <Dialog {...dialogConfig} onCancel={closeDialog} />
       

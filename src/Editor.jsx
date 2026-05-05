@@ -145,7 +145,7 @@ function Editor() {
     URL.revokeObjectURL(url);
   };
   return (
-    <div className="h-screen w-full flex flex-col bg-transparent text-[#111] dark:text-[#eee] overflow-hidden relative">
+    <div className="h-screen w-full flex flex-col bg-[var(--bg-color)] transition-colors duration-300 text-[#111] dark:text-[#eee] overflow-hidden relative">
       <Dialog {...dialogConfig} onCancel={closeDialog} />
       {}
       <div 
