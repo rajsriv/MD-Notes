@@ -186,19 +186,19 @@ function Home({ currentTheme, onToggleTheme }) {
                       onPointerLeave={cancelLongPress}
                       onPointerMove={cancelLongPress}
                       onClick={(e) => handleItemClick(e, doc.id)}
-                      className={`break-inside-avoid mb-3 relative flex flex-col border border-[#e5e5e0] dark:border-[#333] rounded-2xl overflow-hidden transition-colors cursor-pointer select-none ${isSelected ? 'bg-[#ebebe5] dark:bg-[#252525] border-[#999] dark:border-[#555]' : 'bg-[#fcfcfc] dark:bg-[#1a1a1a] active:bg-[#ebebe5] dark:active:bg-[#252525]'}`}
+                      className={`break-inside-avoid mb-3 relative flex flex-col border border-[#e5e5e0] dark:border-[#333] rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer select-none ${isSelected ? 'bg-[#ebebe5] dark:bg-[#252525] border-[#999] dark:border-[#555]' : 'bg-white dark:bg-[#1a1a1a] shadow-sm active:scale-[0.98]'}`}
                     >
                       <div className="p-3.5 pointer-events-none">
-                        <p className="text-[12.5px] font-serif leading-[1.6] text-[#555] dark:text-[#aaa] break-words line-clamp-5">
+                        <p className="text-[12.5px] font-serif leading-[1.6] text-[#444] dark:text-[#aaa] break-words line-clamp-5">
                           {stripMarkdown(doc.content) || 'Empty document'}
                         </p>
                       </div>
-                      <div className="flex-shrink-0 bg-white dark:bg-[#222] border-t border-[#f0f0ea] dark:border-[#333] p-3 pointer-events-none flex items-center justify-between">
+                      <div className="flex-shrink-0 bg-[#f9f9f9] dark:bg-[#222] border-t border-[#f0f0ea] dark:border-[#333] p-3 pointer-events-none flex items-center justify-between">
                         <div className="flex-1 overflow-hidden pr-2">
-                          <h3 className="text-[13px] font-serif font-medium text-[#111] dark:text-[#eee] mb-0.5 truncate">
+                          <h3 className="text-[13px] font-serif font-medium text-black dark:text-[#eee] mb-0.5 truncate">
                             {doc.title || 'Untitled Document'}
                           </h3>
-                          <p className="text-[10px] font-sans text-[#777] dark:text-[#555]">
+                          <p className="text-[10px] font-sans text-[#999] dark:text-[#555]">
                             {new Date(doc.lastModified).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                           </p>
                         </div>
@@ -217,13 +217,13 @@ function Home({ currentTheme, onToggleTheme }) {
                     onPointerLeave={cancelLongPress}
                     onPointerMove={cancelLongPress}
                     onClick={(e) => handleItemClick(e, doc.id)}
-                    className={`flex items-center justify-between py-5 px-2 border-b border-[#e5e5e0] dark:border-[#333] transition-colors cursor-pointer select-none ${isSelected ? 'bg-[#ebebe5] dark:bg-[#252525]' : 'active:bg-[#ebebe5] dark:active:bg-[#252525]'}`}
+                    className={`flex items-center justify-between py-5 px-2 border-b border-[#e5e5e0] dark:border-[#333] transition-colors cursor-pointer select-none ${isSelected ? 'bg-[#ebebe5] dark:bg-[#252525]' : 'hover:bg-white/40 active:bg-[#ebebe5] dark:active:bg-[#252525]'}`}
                   >
                     <div className="flex-1 overflow-hidden pr-4 pointer-events-none">
-                      <h3 className="text-[17px] font-serif text-[#111] dark:text-[#eee] mb-1 truncate">
+                      <h3 className="text-[17px] font-serif text-black dark:text-[#eee] mb-1 truncate">
                         {doc.title || 'Untitled Document'}
                       </h3>
-                      <p className="text-[13px] font-sans text-[#777] dark:text-[#555]">
+                      <p className="text-[13px] font-sans text-[#888] dark:text-[#555]">
                         {new Date(doc.lastModified).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                       </p>
                     </div>

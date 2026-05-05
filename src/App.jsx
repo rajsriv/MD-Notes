@@ -11,13 +11,11 @@ function App() {
   });
 
   useEffect(() => {
-    console.log('Current theme state:', theme);
+    const root = window.document.documentElement;
     if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-      console.log('Added dark class. Current classes:', document.documentElement.className);
+      root.classList.add('dark');
     } else {
-      document.documentElement.classList.remove('dark');
-      console.log('Removed dark class. Current classes:', document.documentElement.className);
+      root.classList.remove('dark');
     }
     localStorage.setItem('mdnotes_theme', theme);
   }, [theme]);
