@@ -133,11 +133,14 @@ function Home() {
       setSelectedIds(new Set());
     }
   };
+
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   return (
     <div className="h-screen w-full flex flex-col relative overflow-hidden bg-transparent">
       {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
       <Dialog {...dialogConfig} onCancel={closeDialog} />
-      {}
+      
       <div 
         className="absolute top-0 left-0 right-0 h-[280px] z-20 pointer-events-none"
         style={{
@@ -147,7 +150,7 @@ function Home() {
            maskImage: 'linear-gradient(to bottom, black 241px, transparent 100%)'
         }}
       />
-      {}
+      
       <div className="absolute top-0 left-0 right-0 z-30 pointer-events-none">
         <header className="pt-16 pb-4 px-8 flex flex-col items-start max-w-2xl mx-auto w-full pointer-events-auto">
           <h1 className="text-4xl font-serif text-black mb-2 tracking-tight">
@@ -161,13 +164,13 @@ function Home() {
           )}
         </header>
       </div>
-      {}
+      
       <main className="flex-1 overflow-auto px-6 z-10 no-scrollbar pb-32 pt-[290px] max-w-2xl mx-auto w-full">
         {docs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center px-4 opacity-50">
             <FileText size={48} className="text-[#999] mb-4" strokeWidth={1} />
             <p className="text-[#333] font-serif text-lg">Your library is empty.</p>
-            <p className="text-[#666] font-serif text-sm mt-2 italic">Tap the + button to begin writing.</p>
+            <p className="text-[#666] font-serif text-sm mt-2 italic">Tap the menu button to begin writing.</p>
           </div>
         ) : (
           <div className={viewMode === 'grid' ? "columns-2 gap-3 px-1 pt-4 pb-8" : "flex flex-col"}>
@@ -185,13 +188,11 @@ function Home() {
                       onClick={(e) => handleItemClick(e, doc.id)}
                       className={`break-inside-avoid mb-3 relative flex flex-col border border-[#e5e5e0] rounded-2xl overflow-hidden transition-colors cursor-pointer select-none ${isSelected ? 'bg-[#ebebe5] border-[#999]' : 'bg-[#fcfcfc] active:bg-[#ebebe5]'}`}
                     >
-                      {}
                       <div className="p-3.5 pointer-events-none">
                         <p className="text-[12.5px] font-serif leading-[1.6] text-[#555] break-words line-clamp-5">
                           {stripMarkdown(doc.content) || 'Empty document'}
                         </p>
                       </div>
-                      {}
                       <div className="flex-shrink-0 bg-white border-t border-[#f0f0ea] p-3 pointer-events-none flex items-center justify-between">
                         <div className="flex-1 overflow-hidden pr-2">
                           <h3 className="text-[13px] font-serif font-medium text-[#111] mb-0.5 truncate">
@@ -238,25 +239,26 @@ function Home() {
           </div>
         )}
       </main>
-      {}
+
+      {isMenuOpen && !isSelectionMode && (
+        <div 
+          className="fixed inset-0 z-30 bg-transparent" 
+          onClick={() => setIsMenuOpen(false)}
+        />
+      )}
+
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center">
         <div 
-          className={`flex items-center justify-center transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden shadow-xl shadow-black/20 ${
+          className={`bg-[#1a1a1a] text-white shadow-2xl shadow-black/30 border border-[#333] transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] relative overflow-hidden ${
             isSelectionMode 
-              ? 'bg-[#1a1a1a] text-white w-[300px] h-[56px] rounded-[28px] px-3 gap-2 border border-[#333]' 
-              : 'bg-black text-white w-14 h-14 rounded-full'
+              ? 'w-[300px] h-[56px] rounded-[28px] px-3 gap-2' 
+              : isMenuOpen
+                ? 'w-[260px] h-[56px] rounded-[28px] px-3'
+                : 'w-[52px] h-[52px] rounded-full'
           }`}
         >
-          {!isSelectionMode ? (
-            <Link 
-              to="/editor"
-              className="w-full h-full flex items-center justify-center active:scale-95 transition-transform"
-              aria-label="New Document"
-            >
-              <Plus size={28} strokeWidth={1.5} />
-            </Link>
-          ) : (
-            <div className="flex items-center w-full justify-between fade-in px-1">
+          {isSelectionMode ? (
+            <div className="flex items-center w-full h-full justify-between fade-in px-1">
               <button 
                 onClick={() => { setIsSelectionMode(false); setSelectedIds(new Set()); }}
                 className="p-2.5 bg-[#333] hover:bg-[#444] rounded-full transition-colors flex items-center justify-center text-[#ddd] hover:text-white shrink-0 active:scale-95"
@@ -293,10 +295,51 @@ function Home() {
                 </button>
               </div>
             </div>
+          ) : !isMenuOpen ? (
+            <button 
+              onClick={() => setIsMenuOpen(true)}
+              className="w-full h-full flex items-center justify-center active:scale-90 transition-transform"
+              aria-label="Menu"
+            >
+              <LayoutGrid size={24} strokeWidth={1.5} className="text-white" />
+            </button>
+          ) : (
+            <div className="flex items-center w-full h-full justify-between fade-in px-1">
+              <button 
+                onClick={() => setIsMenuOpen(false)}
+                className="p-2.5 bg-[#333] hover:bg-[#444] rounded-full transition-colors flex items-center justify-center text-[#ddd] hover:text-white shrink-0 active:scale-95"
+              >
+                <X size={18} strokeWidth={1.5} />
+              </button>
+              <div className="flex items-center gap-1">
+                <button 
+                  onClick={toggleViewMode}
+                  className="p-2.5 rounded-full hover:bg-white/10 transition-colors flex items-center justify-center text-[#ddd] hover:text-white shrink-0 active:scale-95"
+                  title="Toggle Layout"
+                >
+                  {viewMode === 'list' ? <LayoutGrid size={18} strokeWidth={1.5} /> : <List size={18} strokeWidth={1.5} />}
+                </button>
+                <button 
+                  onClick={() => { setIsSelectionMode(true); setIsMenuOpen(false); }}
+                  className="p-2.5 rounded-full hover:bg-white/10 transition-colors flex items-center justify-center text-[#ddd] hover:text-white shrink-0 active:scale-95"
+                  title="Select Notes"
+                >
+                  <CheckSquare size={18} strokeWidth={1.5} />
+                </button>
+                <Link 
+                  to="/editor"
+                  className="p-2.5 bg-white text-black rounded-full hover:bg-[#eee] transition-colors flex items-center justify-center shrink-0 active:scale-95 ml-1"
+                  title="New Note"
+                >
+                  <Plus size={20} strokeWidth={2.5} />
+                </Link>
+              </div>
+            </div>
           )}
         </div>
       </div>
     </div>
   );
 }
+
 export default Home;
