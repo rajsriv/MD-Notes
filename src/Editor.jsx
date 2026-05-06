@@ -251,13 +251,13 @@ const FocusBlur = Extension.create({
   },
 });
 
-const DEFAULT_MARKDOWN = `# Welcome to MD-Notes ✨
+const DEFAULT_MARKDOWN = `# Welcome to MD-Notes
 A beautifully crafted, **distraction-free** Markdown workspace for your thoughts, ideas, and code snippets.
 ## Features
-- 🚀 **Visual Editing**: Write your notes naturally, just like in Word or Notion.
-- 🎨 **Premium Reading**: Designed for a seamless, minimalist e-book reading aesthetic.
-- 🛠️ **Formatting Tools**: Tap the 'Aa' button to reveal the floating Notch Nook toolbar.
-- 📥 **Export**: Download your raw \`.md\` notes in one click.
+- **Visual Editing**: Write your notes naturally, just like in Word or Notion.
+- **Premium Reading**: Designed for a seamless, minimalist e-book reading aesthetic.
+- **Formatting Tools**: Tap the 'Aa' button to reveal the floating Notch Nook toolbar.
+- **Export**: Download your raw \`.md\` notes in one click.
 ### Code Snippets
 \`\`\`javascript
 function captureIdea(idea) {

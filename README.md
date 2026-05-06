@@ -1,8 +1,8 @@
-# MD-Notes 📝
+# MD-Notes
 
 A premium, e-book inspired WYSIWYG Markdown editor. Built for clarity, focus, and a seamless writing experience.
 
-## ✨ Features
+## Features
 
 - **Dynamic Accents & LavaLamp UI**: Personalize your workspace with a curated palette of accent colors. In Light Mode, experience a fluid, animated "LavaLamp" background that responds to your chosen accent.
 - **Advanced Settings & Personalization**: A centralized settings hub to manage global accent colors, display preferences, and editor behavior.
@@ -15,14 +15,14 @@ A premium, e-book inspired WYSIWYG Markdown editor. Built for clarity, focus, an
 - **Responsive & Native**: Fully optimized for mobile (Android/Capacitor) with smooth transitions and haptic-ready interactions.
 - **Export Ready**: Copy raw Markdown or download your notes as `.md` files instantly.
 
-## 🚀 Tech Stack
+## Tech Stack
 
 - **Framework**: [React](https://reactjs.org/) + [Vite](https://vitejs.dev/)
 - **Editor Core**: [Tiptap](https://tiptap.dev/)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
 - **Native Support**: [Capacitor](https://capacitorjs.com/) (Android)
 
-## 🛠️ Installation
+## Installation
 
 1. Clone the repository:
    ```bash
@@ -37,7 +37,7 @@ A premium, e-book inspired WYSIWYG Markdown editor. Built for clarity, focus, an
    npm run dev
    ```
 
-## 📱 Mobile Support
+## Mobile Support
 
 This project includes a pre-configured Android setup using Capacitor. To run on Android:
 ```bash
@@ -45,6 +45,6 @@ npx cap sync
 npx cap open android
 ```
 
-## 📄 License
+## License
 
 MIT License. See [LICENSE](LICENSE) for details.

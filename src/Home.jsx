@@ -8,7 +8,7 @@ import katex from 'katex';
 import 'katex/dist/katex.min.css';
 import db from './db';
 
-const MARKDOWN_GUIDE = `# Markdown Essentials 📝
+const MARKDOWN_GUIDE = `# Markdown Essentials
 
 Master the art of Markdown with this quick reference guide.
 
@@ -48,7 +48,7 @@ Master the art of Markdown with this quick reference guide.
 | Design | Premium |
 `;
 
-const LATEX_GUIDE = `# LaTeX Math Guide 🧮
+const LATEX_GUIDE = `# LaTeX Math Guide
 
 Welcome to the LaTeX-enabled editor! You can now write complex mathematical formulas with ease.
 
