@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Heading1, Heading2, Heading3, 
   Bold, Italic, Strikethrough, 
@@ -6,7 +6,31 @@ import {
   List, ListOrdered, CheckSquare, Type, Sigma
 } from 'lucide-react';
 import Dialog from './Dialog';
+
 function Toolbar({ editor, setExternalDialog, closeExternalDialog, textSize, onUpdateTextSize }) {
+  const [, setUpdateCount] = useState(0);
+
+  // Force re-render when editor state changes (selection, marks, etc.)
+  useEffect(() => {
+    if (!editor) return;
+    
+    const handler = () => {
+      setUpdateCount(prev => prev + 1);
+    };
+
+    editor.on('selectionUpdate', handler);
+    editor.on('transaction', handler);
+    editor.on('focus', handler);
+    editor.on('blur', handler);
+
+    return () => {
+      editor.off('selectionUpdate', handler);
+      editor.off('transaction', handler);
+      editor.off('focus', handler);
+      editor.off('blur', handler);
+    };
+  }, [editor]);
+
   if (!editor) {
     return null;
   }
@@ -72,7 +96,10 @@ function Toolbar({ editor, setExternalDialog, closeExternalDialog, textSize, onU
           <button
             key={index}
             title={tool.label}
-            onClick={tool.action}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => {
+              tool.action();
+            }}
             className={`p-1.5 rounded-full transition-colors flex-shrink-0 active:scale-95 ${
               tool.isActive 
                 ? 'text-white bg-black dark:text-black dark:bg-white shadow-sm' 

@@ -278,12 +278,16 @@ function Home({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, prefe
       />
       
       <div 
-        className="fixed top-0 left-0 right-0 h-[320px] z-20 pointer-events-none transition-colors duration-300"
+        className="fixed top-0 left-0 right-0 h-[360px] z-20 pointer-events-none transition-all duration-500"
         style={{
-           background: `linear-gradient(to bottom, var(--bg-color) 0%, transparent 100%)`,
-           backdropFilter: 'blur(20px)',
-           WebkitMaskImage: 'linear-gradient(to bottom, black 0%, transparent 100%)',
-           maskImage: 'linear-gradient(to bottom, black 0%, transparent 100%)'
+           background: `linear-gradient(to bottom, 
+             var(--bg-color) 0%, 
+             var(--bg-color) 60%, 
+             rgba(var(--bg-color-rgb), 0.9) 80%, 
+             transparent 100%)`,
+           backdropFilter: 'blur(32px) saturate(150%)',
+           WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 75%, transparent 100%)',
+           maskImage: 'linear-gradient(to bottom, black 0%, black 75%, transparent 100%)'
         }}
       />
       
@@ -314,7 +318,7 @@ function Home({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, prefe
         </header>
       </div>
       
-      <main className="flex-1 overflow-auto px-6 z-10 no-scrollbar pb-32 pt-[290px] max-w-2xl mx-auto w-full">
+      <main className="flex-1 overflow-auto px-6 z-10 no-scrollbar pb-32 pt-[290px] max-w-2xl mx-auto w-full spring-scroll">
         {docs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center px-4 opacity-50">
             <FileText size={48} className="text-[#999] mb-4" strokeWidth={1} />
@@ -341,10 +345,14 @@ function Home({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, prefe
                         animationDelay: preferences.staggeredEntry ? `${docs.indexOf(doc) * 0.05}s` : '0s'
                       }}
                     >
-                      <div className="p-3.5 pointer-events-none overflow-hidden max-h-[160px]">
+                      <div className="p-3.5 pointer-events-none overflow-hidden">
                         <div className="prose prose-sm prose-slate dark:prose-invert max-w-none">
                           <div 
-                            className="text-[12.5px] font-serif leading-[1.6] text-[#444] dark:text-[#aaa] break-words line-clamp-6"
+                            className={`text-[12.5px] font-serif leading-[1.6] text-[#444] dark:text-[#aaa] break-words ${
+                              ['line-clamp-3', 'line-clamp-4', 'line-clamp-5', 'line-clamp-6'][
+                                (doc.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % 4
+                              ]
+                            }`}
                             dangerouslySetInnerHTML={{ 
                               __html: (doc.content || '')
                                 .replace(/\$\$([\s\S]+?)\$\$/g, (_, math) => {

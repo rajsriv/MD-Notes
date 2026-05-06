@@ -100,18 +100,50 @@ ul[data-type="taskList"] li[data-checked="true"] > div > p {
     @apply focus:outline-none;
   }
   
+  html, body {
+    height: 100%;
+    overscroll-behavior-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   body {
     @apply bg-[var(--bg-color)] text-[#1a1a1a] antialiased transition-colors duration-300;
     @apply dark:text-[#e0e0e0];
     font-size: var(--base-font-size);
-    selection-background-color: var(--accent-color);
-    selection-color: white;
+    caret-color: var(--accent-color);
   }
   
   ::selection {
-    background-color: rgba(var(--accent-color-rgb), 0.2);
+    background-color: rgba(var(--accent-color-rgb), 0.25);
     color: inherit;
   }
+
+  .ProseMirror {
+    caret-color: var(--accent-color);
+  }
+}
+
+/* Force spring effect even if content is small */
+.spring-scroll {
+  overscroll-behavior-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+}
+
+.spring-scroll > * {
+  flex-shrink: 0;
+}
+
+/* The magic trick to force scroll bounce on mobile/modern browsers */
+.spring-scroll::after {
+  content: "";
+  display: block;
+  min-height: 1px;
+  width: 1px;
+  background: transparent;
+  pointer-events: none;
+  flex-shrink: 0;
 }
 .no-scrollbar::-webkit-scrollbar {
   display: none;
@@ -134,7 +166,7 @@ ul[data-type="taskList"] li[data-checked="true"] > div > p {
   @apply bg-[#b4b4b0] dark:bg-[#444];
 }
 .markdown-preview {
-  @apply font-serif text-[1.1rem] leading-[1.8] text-gray-800 dark:text-gray-300 max-w-2xl mx-auto pb-32 pt-0 transition-colors duration-300;
+  @apply font-serif text-[1.1rem] leading-[1.8] text-gray-800 dark:text-gray-300 pb-32 pt-0 transition-colors duration-300 text-left;
 }
 .markdown-preview h1,
 .markdown-preview h2,
@@ -369,4 +401,55 @@ ul[data-type="taskList"] li[data-checked="true"] > div > p {
 .katex {
   font-size: 1.1em !important;
   text-rendering: auto !important;
+}
+
+/* Custom Caret Animations and Shapes */
+.custom-caret-active .ProseMirror {
+  caret-color: transparent !important;
+}
+
+.custom-caret-node {
+  position: relative;
+  display: inline-block;
+  width: 0;
+  height: 0;
+  vertical-align: baseline;
+  pointer-events: none;
+}
+
+.custom-caret-node::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  background-color: var(--accent-color);
+  animation: custom-caret-blink 1s steps(1) infinite;
+  z-index: 10;
+}
+
+/* Line style */
+.caret-type-line .custom-caret-node::after {
+  width: 2.5px;
+  height: 1.3em;
+  bottom: -0.25em;
+  border-radius: 1px;
+}
+
+/* Block style */
+.caret-type-block .custom-caret-node::after {
+  width: 0.65em;
+  height: 1.2em;
+  bottom: -0.2em;
+  opacity: 0.5;
+}
+
+/* Underscore style */
+.caret-type-underscore .custom-caret-node::after {
+  width: 0.65em;
+  height: 2.5px;
+  bottom: -0.1em;
+}
+
+@keyframes custom-caret-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }

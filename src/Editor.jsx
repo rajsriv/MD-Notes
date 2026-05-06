@@ -190,6 +190,31 @@ const Mathematics = Node.create({
   },
 });
 
+const CustomCaret = Extension.create({
+  name: 'customCaret',
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: new PluginKey('custom-caret'),
+        props: {
+          decorations: (state) => {
+            const { selection } = state;
+            if (!selection.empty) return null;
+            
+            return DecorationSet.create(state.doc, [
+              Decoration.widget(selection.from, () => {
+                const span = document.createElement('span');
+                span.className = 'custom-caret-node';
+                return span;
+              }, { side: -1 })
+            ]);
+          },
+        },
+      }),
+    ];
+  },
+});
+
 const FocusBlur = Extension.create({
   name: 'focusBlur',
   addProseMirrorPlugins() {
@@ -286,11 +311,13 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, pre
       TaskItem.configure({ nested: true }),
       Mathematics,
       FocusBlur,
+      CustomCaret,
     ],
     content: initialContent,
     contentType: 'markdown',
+    autofocus: 'end',
     editorProps: {
-      class: `focus:outline-none min-h-full px-6 markdown-preview pb-40 pt-0 ${preferences.focusBlur ? 'focus-blur-active' : ''}`,
+      class: `focus:outline-none min-h-full markdown-preview pb-40 pt-0 ${preferences.focusBlur ? 'focus-blur-active' : ''} custom-caret-active caret-type-${preferences.caretType || 'line'}`,
     },
     onUpdate: ({ editor }) => {
       setMarkdown(editor.getMarkdown());
@@ -546,14 +573,14 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, pre
         }}
       >
         <div className={`flex-1 flex flex-col h-full absolute inset-0 transition-all duration-500 ${activeTab === 'editor' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'} ${preferences.paperSlide && activeTab === 'code' ? '-translate-x-10' : 'translate-x-0'}`}>
-          <main ref={editorScrollRef} className="flex-1 overflow-auto px-6 z-10 no-scrollbar pb-52 pt-20 max-w-2xl mx-auto w-full">
+          <main ref={editorScrollRef} className="flex-1 overflow-auto px-6 z-10 no-scrollbar pb-52 pt-20 max-w-2xl mx-auto w-full spring-scroll">
             <div className="markdown-preview focus:outline-none" style={{ fontSize: `${textSize}%` }}>
               <EditorContent editor={editor} />
             </div>
           </main>
         </div>
         <div className={`flex-1 flex flex-col h-full absolute inset-0 transition-all duration-500 ${activeTab === 'code' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'} ${preferences.paperSlide && activeTab === 'editor' ? 'translate-x-10' : 'translate-x-0'}`}>
-          <div className="pt-20 pb-52 h-full flex flex-col px-4">
+          <div className="pt-20 pb-52 h-full flex flex-col px-4 overflow-auto spring-scroll no-scrollbar">
             <CodeOutput markdown={markdown} setMarkdown={setMarkdown} editor={editor} />
           </div>
         </div>

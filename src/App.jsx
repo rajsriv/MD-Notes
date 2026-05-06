@@ -13,7 +13,8 @@ function App() {
       focusBlur: false,
       elasticMorph: true,
       scrollProgress: true,
-      inkBleed: true
+      inkBleed: true,
+      caretType: 'line'
     };
     try {
       const saved = localStorage.getItem('mdnotes_preferences');

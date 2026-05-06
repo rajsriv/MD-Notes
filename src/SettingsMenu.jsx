@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Sun, Moon, Palette, Zap, Layers, Eye, Move, BarChart, Droplets } from 'lucide-react';
+import { X, Sun, Moon, Palette, Zap, Layers, Eye, Move, BarChart, Droplets, Type } from 'lucide-react';
 
 const ACCENT_COLORS = [
   { name: 'Slate', color: '#000000' },
@@ -78,6 +78,33 @@ function SettingsMenu({
                   />
                 ))}
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Writing Style Section */}
+        <section className="mb-8">
+          <h3 className="text-[11px] font-sans font-semibold text-[#888] uppercase tracking-widest mb-4">Writing Experience</h3>
+          <div className="bg-white dark:bg-[#1a1a1a] p-4 rounded-2xl border border-[#e5e5e0] dark:border-[#333]">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-black/5 dark:bg-white/5 rounded-xl text-[#666] dark:text-[#aaa]">
+                <Type size={18} />
+              </div>
+              <div>
+                <p className="text-sm font-medium">Caret Style</p>
+                <p className="text-[11px] text-[#888]">Customize your typing cursor</p>
+              </div>
+            </div>
+            <div className="flex bg-[#f0f0ea] dark:bg-[#252525] p-1 rounded-xl">
+              {['line', 'block', 'underscore'].map(type => (
+                <button
+                  key={type}
+                  onClick={() => onUpdatePreference('caretType', type)}
+                  className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all capitalize ${preferences.caretType === type ? 'bg-white dark:bg-[#444] text-black dark:text-white shadow-sm' : 'text-[#666] dark:text-[#999]'}`}
+                >
+                  {type}
+                </button>
+              ))}
             </div>
           </div>
         </section>

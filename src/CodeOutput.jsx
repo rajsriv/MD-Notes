@@ -43,7 +43,7 @@ function CodeOutput({ markdown, setMarkdown, editor }) {
             spellCheck="false"
           />
         ) : (
-          <pre className="text-[14px] font-mono text-[#222] dark:text-[#ccc] whitespace-pre-wrap break-words leading-relaxed max-w-2xl mx-auto w-full transition-colors">
+          <pre className="text-[14px] font-mono text-[#222] dark:text-[#ccc] whitespace-pre-wrap break-words leading-relaxed w-full transition-colors">
             {markdown || 'Your markdown code will appear here...'}
           </pre>
         )}
