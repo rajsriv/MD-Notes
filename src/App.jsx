@@ -77,7 +77,7 @@ function App() {
             title: 'Markdown Essentials',
             type: 'markdown',
             lastModified: Date.now(),
-            content: `# Welcome to MD-Notes
+            content: String.raw`# Welcome to MD-Notes
 A beautifully crafted, **distraction-free** Markdown workspace.
 
 ## Features
@@ -85,6 +85,7 @@ A beautifully crafted, **distraction-free** Markdown workspace.
 - **Visual Assets**: Add images with captions.
 ![Nature](https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&q=80&w=2070)
 *Capturing beauty in every pixel.*
+
 
 - **Mathematics**: Full LaTeX support via KaTeX.
 $$
@@ -99,7 +100,7 @@ $$
             title: 'Mathematical Formulas',
             type: 'markdown',
             lastModified: Date.now() - 500,
-            content: `# LaTeX in MD-Notes
+            content: String.raw`# LaTeX in MD-Notes
 The editor supports high-performance mathematical typesetting using KaTeX.
 
 ## Inline Math
@@ -109,28 +110,19 @@ You can include formulas within your text, like $a^2 + b^2 = c^2$, by wrapping t
 For more complex equations, use double dollar signs:
 
 $$
-x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}
+x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
 $$
 
-### Calculus Example
 $$
-\\int_{a}^{b} x^2 dx = \\left[ \\frac{x^3}{3} \\right]_{a}^{b}
-$$
-
-### Matrices
-$$
-\\begin{pmatrix} 
-1 & 0 & 0 \\\\
-0 & 1 & 0 \\\\
-0 & 0 & 1 
-\\end{pmatrix}
+\int_{a}^{b} x^2 dx = \left[ \frac{x^3}{3} \right]_{a}^{b}
 $$
 `
           });
 
           // 2. Free Mode Tutorial
           const freeModeData = {
-            mainContent: "# Free Mode Masterclass\nExplore the creative canvas.",
+            mainContent: String.raw`# Free Mode Masterclass
+Explore the creative canvas.`,
             isFreeMode: true,
             elements: [
               {

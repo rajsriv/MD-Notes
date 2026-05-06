@@ -72,10 +72,6 @@ function captureIdea(idea) {
   return "Saved: " + idea;
 }
 \`\`\`
-### To-Do List
-- [x] Adopt a minimalist e-book style
-- [x] Implement smooth dynamic animations
-- [ ] Jot down some brilliant ideas
 > "The palest ink is better than the best memory."
 `;
 function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, preferences, onUpdatePreference }) {

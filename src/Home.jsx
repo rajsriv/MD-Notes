@@ -211,6 +211,7 @@ function Home({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, prefe
   const [dialogConfig, setDialogConfig] = useState({ isOpen: false });
   const [viewMode, setViewMode] = useState(localStorage.getItem('readmeMaker_viewMode') || 'list');
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [isContentVisible, setIsContentVisible] = useState(false);
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [ripples, setRipples] = useState([]);
@@ -254,35 +255,13 @@ function Home({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, prefe
       setViewMode(savedMode);
 
       const savedDocs = await db.getDocs();
-      if (savedDocs.length === 0) {
-        const now = Date.now();
-        const templates = [
-          {
-            id: 'markdown-guide-' + now,
-            title: 'Markdown Essentials',
-            content: MARKDOWN_GUIDE,
-            lastModified: now + 100,
-            accentColor: '#2563eb' // Blue
-          },
-          {
-            id: 'latex-guide-' + now,
-            title: 'LaTeX Math Guide',
-            content: LATEX_GUIDE,
-            lastModified: now,
-            accentColor: '#7c3aed' // Violet
-          }
-        ];
-        for (const template of templates) {
-          await db.saveDoc(template);
-        }
-        setDocs(templates);
-      } else {
-        setDocs(savedDocs);
-      }
+      setDocs(savedDocs);
       
       const hasOnboardedStr = await db.getPreference('mdnotes_onboarded', 'false');
       if (hasOnboardedStr !== 'true') {
         setShowOnboarding(true);
+      } else {
+        setIsContentVisible(true);
       }
     };
     init();
@@ -291,6 +270,10 @@ function Home({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, prefe
   const handleOnboardingComplete = async () => {
     await db.setPreference('mdnotes_onboarded', 'true');
     setShowOnboarding(false);
+    // Delay content visibility to match onboarding fade-out
+    setTimeout(() => {
+      setIsContentVisible(true);
+    }, 600);
   };
   const loadDocs = async () => {
     const savedDocs = await db.getDocs();
@@ -395,9 +378,106 @@ function Home({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, prefe
     }, 800);
   };
 
+  const [isFormatSelectorClosing, setIsFormatSelectorClosing] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
+
+  const closeFormatSelector = () => {
+    setIsFormatSelectorClosing(true);
+    setTimeout(() => {
+      setShowFormatSelector(false);
+      setIsFormatSelectorClosing(false);
+    }, 500);
+  };
+
+  const handleFormatSelect = (type, mode = null) => {
+    setIsNavigating(true);
+    setTimeout(() => {
+      navigate(`/editor?type=${type}${mode ? `&mode=${mode}` : ''}`);
+      // We don't hide the selector immediately to avoid the glimpse
+      // The new page will mount over this one
+      setTimeout(() => {
+        setShowFormatSelector(false);
+        setIsNavigating(false);
+      }, 500);
+    }, 500);
+  };
+
   return (
     <div className="h-screen flex flex-col bg-[var(--bg-color)] transition-colors duration-300 relative overflow-hidden">
       {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
+      
+      {/* Immersive Format Selection Overlay */}
+      {showFormatSelector && (
+        <div className={`fixed inset-0 z-[200] bg-white dark:bg-[#0a0a0a] transition-all duration-700 ease-in-out ${isFormatSelectorClosing ? 'opacity-0' : 'opacity-100'}`}>
+          {/* Animated Background - Keep this solid if navigating */}
+          <div className={`absolute inset-0 z-0 overflow-hidden transition-opacity duration-700 ${isFormatSelectorClosing ? 'opacity-0' : 'opacity-100'}`}>
+            <div className={`absolute inset-0 bg-gradient-to-br from-[#ff6b6b]/10 via-[#4834d4]/10 to-[#badc58]/10 opacity-60`} />
+            <div className="absolute inset-0 backdrop-blur-[100px]" />
+            
+            {/* Floating Blobs */}
+            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-[#ff6b6b]/20 blur-[120px] animate-pulse" />
+            <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-[#4834d4]/20 blur-[120px] animate-pulse animation-delay-2000" />
+          </div>
+
+          <div className={`relative z-10 h-full flex flex-col items-center justify-center p-8 md:p-20 transition-all duration-500 ${isNavigating ? 'opacity-0 scale-95 blur-sm' : 'opacity-100'}`}>
+            <div className="w-full max-w-xl space-y-12 animate-in fade-in duration-1000 ease-out">
+              <div className="text-center space-y-4">
+                <h3 className="text-5xl md:text-7xl font-serif text-black dark:text-white tracking-tight leading-tight">
+                  Choose Your Canvas
+                </h3>
+                <p className="text-lg md:text-xl text-[#666] dark:text-[#999] font-serif italic max-w-md mx-auto leading-relaxed">
+                  Every great thought deserves the perfect environment to grow.
+                </p>
+              </div>
+              
+              <div className="flex flex-col w-full max-w-md mx-auto divide-y divide-black/5 dark:divide-white/5">
+                <button 
+                  onClick={() => handleFormatSelect('markdown')}
+                  className="group flex items-center justify-between py-10 transition-all active:opacity-60 animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both"
+                >
+                  <div className="flex items-center gap-8">
+                    <div className="text-black dark:text-white transition-transform group-hover:scale-110 duration-500">
+                      <FileText size={32} strokeWidth={1.5} />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-3xl font-serif text-black dark:text-white tracking-tight mb-1">Markdown Mode</p>
+                      <p className="text-sm text-[#888] dark:text-[#666] font-sans uppercase tracking-[0.2em] font-bold">Structured Document</p>
+                    </div>
+                  </div>
+                  <ChevronRight size={20} className="text-[#ccc] opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0 transition-all" />
+                </button>
+
+                <button 
+                  onClick={() => handleFormatSelect('plain', 'free')}
+                  className="group flex items-center justify-between py-10 transition-all active:opacity-60 animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-both"
+                >
+                  <div className="flex items-center gap-8">
+                    <div className="text-[var(--accent-color)] transition-transform group-hover:scale-110 duration-500">
+                      <LayoutGrid size={32} strokeWidth={1.5} />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-3xl font-serif text-black dark:text-white tracking-tight mb-1">Free Mode</p>
+                      <p className="text-sm text-[#888] dark:text-[#666] font-sans uppercase tracking-[0.2em] font-bold">Creative Canvas</p>
+                    </div>
+                  </div>
+                  <ChevronRight size={20} className="text-[#ccc] opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0 transition-all" />
+                </button>
+              </div>
+
+              <div className="pt-8 flex justify-center">
+                <button 
+                  onClick={closeFormatSelector}
+                  className="flex items-center gap-2 px-8 py-4 rounded-full bg-black/5 dark:bg-white/5 text-[#888] hover:text-black dark:hover:text-white transition-all active:scale-95 border border-transparent hover:border-black/10 dark:hover:border-white/10"
+                >
+                  <X size={20} />
+                  <span className="text-xs font-bold uppercase tracking-widest">Back to Library</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Dialog {...dialogConfig} onCancel={closeDialog} />
       
       <SettingsMenu 
@@ -473,10 +553,10 @@ function Home({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, prefe
                       onPointerLeave={cancelLongPress}
                       onPointerMove={cancelLongPress}
                       onClick={(e) => handleItemClick(e, doc.id)}
-                      className={`break-inside-avoid mb-3 relative flex flex-col border border-[#e5e5e0] dark:border-[#333] rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer select-none ${isSelected ? 'bg-[#ebebe5] dark:bg-[#252525] border-[#999] dark:border-[#555]' : 'shadow-sm active:scale-[0.98]'} ${preferences.staggeredEntry ? 'staggered-item' : ''}`}
+                      className={`break-inside-avoid mb-3 relative flex flex-col border border-[#e5e5e0] dark:border-[#333] rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer select-none ${isSelected ? 'bg-[#ebebe5] dark:bg-[#252525] border-[#999] dark:border-[#555]' : 'shadow-sm active:scale-[0.98]'} ${isContentVisible && preferences.staggeredEntry ? 'staggered-item' : !isContentVisible ? 'opacity-0' : ''}`}
                       style={{ 
                         backgroundColor: currentTheme === 'light' ? `${doc.accentColor || '#ffffff'}15` : '#1a1a1a',
-                        animationDelay: preferences.staggeredEntry ? `${docs.indexOf(doc) * 0.05}s` : '0s'
+                        animationDelay: isContentVisible && preferences.staggeredEntry ? `${docs.indexOf(doc) * 0.05}s` : '0s'
                       }}
                     >
                       <div className="p-0.5 pointer-events-none overflow-hidden relative bg-white/50 dark:bg-black/20 min-h-[80px]">
@@ -506,10 +586,10 @@ function Home({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, prefe
                     onPointerLeave={cancelLongPress}
                     onPointerMove={cancelLongPress}
                     onClick={(e) => handleItemClick(e, doc.id)}
-                    className={`flex items-center justify-between py-5 px-3 border-b border-[#e5e5e0] dark:border-[#333] transition-colors cursor-pointer select-none ${isSelected ? 'bg-[#ebebe5] dark:bg-[#252525]' : 'hover:bg-white/40 active:bg-[#ebebe5] dark:active:bg-[#252525]'} ${preferences.staggeredEntry ? 'staggered-item' : ''}`}
+                    className={`flex items-center justify-between py-5 px-3 border-b border-[#e5e5e0] dark:border-[#333] transition-colors cursor-pointer select-none ${isSelected ? 'bg-[#ebebe5] dark:bg-[#252525]' : 'hover:bg-white/40 active:bg-[#ebebe5] dark:active:bg-[#252525]'} ${isContentVisible && preferences.staggeredEntry ? 'staggered-item' : !isContentVisible ? 'opacity-0' : ''}`}
                     style={{ 
                       backgroundColor: currentTheme === 'light' ? `${doc.accentColor || '#ffffff'}15` : 'transparent',
-                      animationDelay: preferences.staggeredEntry ? `${docs.indexOf(doc) * 0.05}s` : '0s'
+                      animationDelay: isContentVisible && preferences.staggeredEntry ? `${docs.indexOf(doc) * 0.05}s` : '0s'
                     }}
                   >
                     <div className="flex-1 overflow-hidden pr-4 pointer-events-none">
@@ -669,69 +749,6 @@ function Home({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, prefe
           </div>
         </div>
       </div>
-      {/* Format Selection Overlay */}
-      {showFormatSelector && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-6">
-          <div 
-            className="absolute inset-0 bg-white/40 dark:bg-black/40 backdrop-blur-md transition-all duration-500"
-            onClick={() => setShowFormatSelector(false)}
-          />
-          <div className="relative w-full max-w-sm bg-white dark:bg-[#1a1a1a] rounded-[2.5rem] border border-[#e5e5e0] dark:border-[#333] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-            <div className="p-8">
-              <h3 className="text-2xl font-serif text-black dark:text-white mb-2 text-center">Create New</h3>
-              <p className="text-sm font-serif text-[#666] dark:text-[#999] text-center italic mb-8">Choose your writing format</p>
-              
-              <div className="space-y-3">
-                <button 
-                  onClick={() => navigate('/editor?type=markdown')}
-                  className="w-full flex items-center gap-4 p-4 bg-[#f4f4f0] dark:bg-[#252525] rounded-2xl hover:scale-[1.02] active:scale-95 transition-all group border border-transparent hover:border-black/5 dark:hover:border-white/5"
-                >
-                  <div className="p-3 bg-black dark:bg-white text-white dark:text-black rounded-xl shadow-lg">
-                    <FileText size={20} strokeWidth={1.5} />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-sans font-bold text-black dark:text-white text-sm leading-tight">Markdown</p>
-                    <p className="text-[10px] text-[#888] dark:text-[#666]">Standard structured editor</p>
-                  </div>
-                </button>
-
-                <button 
-                  onClick={() => navigate('/editor?type=plain&mode=fixed')}
-                  className="w-full flex items-center gap-4 p-4 bg-[#f4f4f0] dark:bg-[#252525] rounded-2xl hover:scale-[1.02] active:scale-95 transition-all group border border-transparent hover:border-black/5 dark:hover:border-white/5"
-                >
-                  <div className="p-3 bg-[#e5e5e0] dark:bg-[#333] text-black dark:text-white rounded-xl shadow-md">
-                    <List size={20} strokeWidth={1.5} />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-sans font-bold text-black dark:text-white text-sm leading-tight">Fixed Layout</p>
-                    <p className="text-[10px] text-[#888] dark:text-[#666]">Structured canvas with blocks</p>
-                  </div>
-                </button>
-
-                <button 
-                  onClick={() => navigate('/editor?type=plain&mode=free')}
-                  className="w-full flex items-center gap-4 p-4 bg-[#f4f4f0] dark:bg-[#252525] rounded-2xl hover:scale-[1.02] active:scale-95 transition-all group border border-transparent hover:border-black/5 dark:hover:border-white/5"
-                >
-                  <div className="p-3 bg-[var(--accent-color)] text-white rounded-xl shadow-xl">
-                    <LayoutGrid size={20} strokeWidth={1.5} />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-sans font-bold text-black dark:text-white text-sm leading-tight">Free Canvas</p>
-                    <p className="text-[10px] text-[#888] dark:text-[#666]">Free-form draggable design</p>
-                  </div>
-                </button>
-              </div>
-
-              <button 
-                onClick={() => setShowFormatSelector(false)}
-                className="w-full mt-8 py-3 text-xs font-sans font-bold text-[#aaa] hover:text-black dark:hover:text-white transition-colors uppercase tracking-widest"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

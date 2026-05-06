@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Sun, Moon, Palette, Zap, Layers, Eye, Move, BarChart, Droplets, Type, ChevronRight } from 'lucide-react';
+import { X, Sun, Moon, Palette, Zap, Layers, Eye, Move, BarChart, Droplets, Type, ChevronRight, Github } from 'lucide-react';
 import db from './db';
 
 const ACCENT_COLORS = [
@@ -235,6 +235,29 @@ function SettingsMenu({
                 </button>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* About Section */}
+        <section className="mt-8 mb-4">
+          <h3 className="text-[11px] font-sans font-semibold text-[#888] uppercase tracking-widest mb-2 px-5">About</h3>
+          
+          <div className="flex flex-col">
+            <div className="flex items-center justify-between py-8 px-5">
+              <div className="flex flex-col gap-1">
+                <p className="text-[17px] font-serif text-black dark:text-[#eee]">MD-Notes v2.0</p>
+                <p className="text-[13px] text-[#888] italic">Crafted with care by Raj Sriv</p>
+              </div>
+              <a 
+                href="https://github.com/rajsriv" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-5 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full text-xs font-bold active:scale-95 transition-all shadow-lg shadow-black/10"
+              >
+                <Github size={16} />
+                GitHub
+              </a>
+            </div>
           </div>
         </section>
       </div>
