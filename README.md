@@ -1,50 +1,58 @@
-# MD-Notes
+# MD-Notes v2.0
 
-A premium, e-book inspired WYSIWYG Markdown editor. Built for clarity, focus, and a seamless writing experience.
+A premium, e-book inspired Markdown sanctuary. MD-Notes is a distraction-free writing environment designed for those who appreciate beautiful typography and creative freedom.
 
-## Features
+## ✨ The Dual-Mode Experience
 
-- **Dynamic Accents & LavaLamp UI**: Personalize your workspace with a curated palette of accent colors. In Light Mode, experience a fluid, animated "LavaLamp" background that responds to your chosen accent.
-- **Advanced Settings & Personalization**: A centralized settings hub to manage global accent colors, display preferences, and editor behavior.
-- **Note-Specific Customization**: Assign unique accent colors to individual notes to categorize them visually and create distinct writing environments.
-- **Comprehensive Dark Mode**: A deep, high-contrast dark theme that respects system preferences and persists user choice across sessions.
-- **Bidirectional Editing**: Switch between a visual Tiptap-powered editor and raw Markdown syntax with live synchronization.
-- **E-Book Aesthetics**: A refined UI inspired by modern e-readers, featuring a premium light-beige theme, crisp typography, and subtle micro-animations.
-- **Notch Nook Navigation**: A floating, theme-aware navigation capsule for quick access to tools, theme toggles, and layout settings.
-- **Masonry Layout**: A dynamic grid for organizing your notes visually with a premium masonry effect.
-- **Responsive & Native**: Fully optimized for mobile (Android/Capacitor) with smooth transitions and haptic-ready interactions.
-- **Export Ready**: Copy raw Markdown or download your notes as `.md` files instantly.
+MD-Notes simplifies the writing workflow into two powerful, distinct modes:
 
-## Tech Stack
+- **Markdown Mode**: A high-performance, structured WYSIWYG editor with full LaTeX support via KaTeX. Perfect for documentation, technical notes, and long-form writing.
+- **Free Mode**: An infinite creative canvas where notes are objects. Drag, rotate, and layer text and images to create visual designs, mood boards, or spatial brainstorms.
+
+## 🌟 Key Features
+
+- **Immersive Onboarding**: A cinematic, full-screen visual tour that introduces you to the sanctuary’s features with vibrant gradients and smooth transitions.
+- **Free-Form Canvas**: Draggable and rotatable elements with a smart text-wrapping engine that allows text to flow organically around images.
+- **Mathematical Mastery**: High-performance LaTeX typesetting support for complex formulas, both inline ($E=mc^2$) and in blocks ($$ ... $$).
+- **Dynamic Design System**: Personalize your workspace with curated accent colors. Features a fluid "LavaLamp" background in light mode that adapts to your chosen theme.
+- **Notch Nook Toolbar**: A floating, minimalist navigation capsule that gives you instant access to formatting tools while staying out of your way.
+- **Premium E-Book Aesthetics**: A refined UI inspired by high-end e-readers, featuring a warm "paper" light theme and a deep, immersive dark mode.
+- **Staggered Entry Animations**: Every interaction is choreographed. From the library grid to the creation menu, items reveal themselves with smooth, sequential transitions.
+- **Responsive & Mobile Ready**: Built for the palm of your hand. Fully optimized for Android via Capacitor with fluid gestures and native-feeling interactions.
+
+## 🛠 Tech Stack
 
 - **Framework**: [React](https://reactjs.org/) + [Vite](https://vitejs.dev/)
-- **Editor Core**: [Tiptap](https://tiptap.dev/)
+- **Editor Core**: [Tiptap](https://tiptap.dev/) (ProseMirror based)
+- **Math Engine**: [KaTeX](https://katex.org/)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **Native Support**: [Capacitor](https://capacitorjs.com/) (Android)
+- **Animations**: [Framer Motion](https://www.framer.com/motion/) & Tailwind CSS Animate
+- **Native Bridge**: [Capacitor](https://capacitorjs.com/) (Android)
+- **Database**: [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) (via a custom wrapper)
 
-## Installation
+## 🚀 Getting Started
 
-1. Clone the repository:
+1. **Clone the repository**:
    ```bash
    git clone https://github.com/rajsriv/MD-Notes.git
    ```
-2. Install dependencies:
+2. **Install dependencies**:
    ```bash
    npm install
    ```
-3. Start the development server:
+3. **Launch the sanctuary**:
    ```bash
    npm run dev
    ```
 
-## Mobile Support
+## 📱 Mobile Deployment
 
-This project includes a pre-configured Android setup using Capacitor. To run on Android:
+Sync and open the project in Android Studio:
 ```bash
 npx cap sync
 npx cap open android
 ```
 
-## License
+## 📄 License
 
-MIT License. See [LICENSE](LICENSE) for details.
+Crafted with care by [Raj Sriv](https://github.com/rajsriv). Released under the [MIT License](LICENSE).
