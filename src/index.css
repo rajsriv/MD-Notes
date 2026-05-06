@@ -122,17 +122,17 @@ ul[data-type="taskList"] li[data-checked="true"] > div > p {
     caret-color: var(--accent-color);
   }
 
-  .ProseMirror p.is-editor-empty:first-child::before {
+  .ProseMirror .is-empty::before {
     content: attr(data-placeholder);
     float: left;
-    color: #adb5bd;
+    color: #999;
     pointer-events: none;
     height: 0;
     @apply italic font-serif;
   }
   
-  .dark .ProseMirror p.is-editor-empty:first-child::before {
-    color: #444;
+  .dark .ProseMirror .is-empty::before {
+    color: #666;
   }
 }
 
