@@ -186,7 +186,7 @@ ul[data-type="taskList"] li[data-checked="true"] > div > p {
   @apply text-xl md:text-2xl;
 }
 .markdown-preview p {
-  @apply mb-6;
+  @apply mb-4;
 }
 .markdown-preview ul {
   @apply list-disc list-outside ml-6 mb-6 space-y-3;

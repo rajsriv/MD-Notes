@@ -800,7 +800,7 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, pre
         <div
           className={`bg-white dark:bg-[#1a1a1a] text-black dark:text-white shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.15)] dark:shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.5)] transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] relative ${preferences.elasticMorph ? 'ease-elastic' : ''} ${isToolbarExpanded
             ? 'w-full h-12'
-            : 'w-[240px] rounded-t-2xl h-11 shadow-2xl border-x border-t border-[#e5e5e0] dark:border-[#333]'
+            : `${docType === 'plain' ? 'w-[200px]' : 'w-[240px]'} rounded-t-2xl h-11 shadow-2xl border-x border-t border-[#e5e5e0] dark:border-[#333]`
             }`}
         >
           {/* Inverted Corners (Outward Curves) */}
@@ -826,28 +826,30 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, pre
             className={`absolute inset-0 flex items-center justify-between px-3 transition-all duration-400 ${isToolbarExpanded ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100 delay-100'
               }`}
           >
-            <div className="relative flex items-center bg-[#f0f0ea] dark:bg-[#252525] p-1 rounded-full">
-              <div 
-                className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white dark:bg-[#333] rounded-full shadow-sm transition-transform duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] ${
-                  activeTab === 'code' ? 'translate-x-full' : 'translate-x-0'
-                }`}
-                style={{ width: isReadingMode ? '100%' : 'calc(50% - 4px)' }}
-              />
-              <button
-                onClick={() => setActiveTab('editor')}
-                className={`relative z-10 px-3 py-1 rounded-full text-[12px] font-medium transition-all duration-300 ${activeTab === 'editor' ? 'text-black dark:text-white' : 'text-[#666] dark:text-[#999] hover:text-black dark:hover:text-white'}`}
-              >
-                Read
-              </button>
-              {docType === 'markdown' && !isReadingMode && (
+            {docType === 'markdown' && (
+              <div className="relative flex items-center bg-[#f0f0ea] dark:bg-[#252525] p-1 rounded-full">
+                <div 
+                  className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white dark:bg-[#333] rounded-full shadow-sm transition-transform duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] ${
+                    activeTab === 'code' ? 'translate-x-full' : 'translate-x-0'
+                  }`}
+                  style={{ width: isReadingMode ? '100%' : 'calc(50% - 4px)' }}
+                />
                 <button
-                  onClick={() => setActiveTab('code')}
-                  className={`relative z-10 px-3 py-1 rounded-full text-[12px] font-medium transition-all duration-300 ${activeTab === 'code' ? 'text-black dark:text-white' : 'text-[#666] dark:text-[#999] hover:text-black dark:hover:text-white'}`}
+                  onClick={() => setActiveTab('editor')}
+                  className={`relative z-10 px-3 py-1 rounded-full text-[12px] font-medium transition-all duration-300 ${activeTab === 'editor' ? 'text-black dark:text-white' : 'text-[#666] dark:text-[#999] hover:text-black dark:hover:text-white'}`}
                 >
-                  Code
+                  Read
                 </button>
-              )}
-            </div>
+                {!isReadingMode && (
+                  <button
+                    onClick={() => setActiveTab('code')}
+                    className={`relative z-10 px-3 py-1 rounded-full text-[12px] font-medium transition-all duration-300 ${activeTab === 'code' ? 'text-black dark:text-white' : 'text-[#666] dark:text-[#999] hover:text-black dark:hover:text-white'}`}
+                  >
+                    Code
+                  </button>
+                )}
+              </div>
+            )}
             {docType === 'plain' && !isReadingMode && (
               <div className="flex items-center gap-1.5 bg-[#f0f0ea] dark:bg-[#252525] p-1 rounded-full ml-2">
                 <button 

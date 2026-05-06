@@ -3,7 +3,7 @@ import {
   Heading1, Heading2, Heading3, 
   Bold, Italic, Strikethrough, 
   Code, Quote, Link, Image, 
-  List, ListOrdered, CheckSquare, Type, Sigma
+  List, ListOrdered, CheckSquare, Type, Sigma, CornerDownLeft
 } from 'lucide-react';
 import Dialog from './Dialog';
 
@@ -76,6 +76,7 @@ function Toolbar({ editor, setExternalDialog, closeExternalDialog, textSize, onU
     { divider: true },
     { icon: <Code size={16} />, label: 'Code', isActive: editor.isActive('code'), action: () => editor.chain().focus().toggleCode().run() },
     { icon: <Quote size={16} />, label: 'Quote', isActive: editor.isActive('blockquote'), action: () => editor.chain().focus().toggleBlockquote().run() },
+    { icon: <CornerDownLeft size={16} />, label: 'Hard Break', action: () => editor.chain().focus().setHardBreak().run() },
     { divider: true },
     { icon: <Link size={16} />, label: 'Link', isActive: editor.isActive('link'), action: setLink },
     { icon: <Image size={16} />, label: 'Image', isActive: editor.isActive('image'), action: setImage },
