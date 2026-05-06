@@ -7,6 +7,7 @@ import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
+import Placeholder from '@tiptap/extension-placeholder';
 import Toolbar from './Toolbar';
 import CodeOutput from './CodeOutput';
 import { Save, ChevronLeft, Type, X, Sun, Moon, Copy, Check, Palette, BookOpen, Eye, EyeOff, Sigma, Settings } from 'lucide-react';
@@ -321,6 +322,9 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, pre
       Mathematics,
       FocusBlur,
       CustomCaret,
+      Placeholder.configure({
+        placeholder: 'Start writing here....',
+      }),
     ],
     content: initialContent,
     contentType: 'markdown',

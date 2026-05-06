@@ -121,6 +121,19 @@ ul[data-type="taskList"] li[data-checked="true"] > div > p {
   .ProseMirror {
     caret-color: var(--accent-color);
   }
+
+  .ProseMirror p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    float: left;
+    color: #adb5bd;
+    pointer-events: none;
+    height: 0;
+    @apply italic font-serif;
+  }
+  
+  .dark .ProseMirror p.is-editor-empty:first-child::before {
+    color: #444;
+  }
 }
 
 /* Force spring effect even if content is small */
