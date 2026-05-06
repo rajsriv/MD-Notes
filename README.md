@@ -5,6 +5,7 @@ A premium, e-book inspired WYSIWYG Markdown editor. Built for clarity, focus, an
 ## ✨ Features
 
 - **Dynamic Accents & LavaLamp UI**: Personalize your workspace with a curated palette of accent colors. In Light Mode, experience a fluid, animated "LavaLamp" background that responds to your chosen accent.
+- **Advanced Settings & Personalization**: A centralized settings hub to manage global accent colors, display preferences, and editor behavior.
 - **Note-Specific Customization**: Assign unique accent colors to individual notes to categorize them visually and create distinct writing environments.
 - **Comprehensive Dark Mode**: A deep, high-contrast dark theme that respects system preferences and persists user choice across sessions.
 - **Bidirectional Editing**: Switch between a visual Tiptap-powered editor and raw Markdown syntax with live synchronization.

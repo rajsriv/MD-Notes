@@ -167,6 +167,9 @@ ul[data-type="taskList"] li[data-checked="true"] > div > p {
 }
 .markdown-preview {
   @apply font-serif text-[1.1rem] leading-[1.8] text-gray-800 dark:text-gray-300 pb-32 pt-0 transition-colors duration-300 text-left;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: none;
 }
 .markdown-preview h1,
 .markdown-preview h2,

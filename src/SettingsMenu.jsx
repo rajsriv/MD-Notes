@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Sun, Moon, Palette, Zap, Layers, Eye, Move, BarChart, Droplets, Type } from 'lucide-react';
+import db from './db';
 
 const ACCENT_COLORS = [
   { name: 'Slate', color: '#000000' },
@@ -20,6 +21,56 @@ function SettingsMenu({
   preferences, 
   onUpdatePreference 
 }) {
+  const [storageSize, setStorageSize] = useState('Calculating...');
+  const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      updateStorageSize();
+    }
+  }, [isOpen]);
+
+  const updateStorageSize = async () => {
+    const size = await db.getDatabaseSize();
+    setStorageSize(size);
+  };
+
+  const handleExport = async () => {
+    const data = await db.exportData();
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `mdnotes-backup-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const success = await db.importData(event.target.result);
+      if (success) {
+        alert('Backup restored successfully! The app will now reload.');
+        window.location.reload();
+      } else {
+        alert('Failed to restore backup. Please ensure the file is a valid MD-Notes backup.');
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleReset = async () => {
+    if (window.confirm('ARE YOU SURE? This will permanently delete all your notes and reset all settings. This action cannot be undone.')) {
+      await db.resetDatabase();
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -106,6 +157,62 @@ function SettingsMenu({
                 </button>
               ))}
             </div>
+          </div>
+        </section>
+
+        {/* Data & Storage Section */}
+        <section className="mb-8">
+          <h3 className="text-[11px] font-sans font-semibold text-[#888] uppercase tracking-widest mb-4">Data & Storage</h3>
+          
+          <div className="space-y-3">
+            <div className="flex items-center justify-between bg-white dark:bg-[#1a1a1a] p-4 rounded-2xl border border-[#e5e5e0] dark:border-[#333]">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-black/5 dark:bg-white/5 rounded-xl text-[#666] dark:text-[#aaa]">
+                  <BarChart size={18} />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Storage Used</p>
+                  <p className="text-[12px] text-[#888]">{storageSize}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button 
+                onClick={handleExport}
+                className="flex flex-col items-center justify-center gap-2 p-4 bg-white dark:bg-[#1a1a1a] rounded-2xl border border-[#e5e5e0] dark:border-[#333] hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+              >
+                <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl">
+                  <Zap size={18} />
+                </div>
+                <span className="text-xs font-medium">Export Backup</span>
+              </button>
+              
+              <button 
+                onClick={() => fileInputRef.current.click()}
+                className="flex flex-col items-center justify-center gap-2 p-4 bg-white dark:bg-[#1a1a1a] rounded-2xl border border-[#e5e5e0] dark:border-[#333] hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+              >
+                <div className="p-2 bg-emerald-500/10 text-emerald-500 rounded-xl">
+                  <Layers size={18} />
+                </div>
+                <span className="text-xs font-medium">Import Backup</span>
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  className="hidden" 
+                  accept=".json" 
+                  onChange={handleImport}
+                />
+              </button>
+            </div>
+
+            <button 
+              onClick={handleReset}
+              className="w-full flex items-center justify-center gap-2 p-4 bg-red-500/10 text-red-500 rounded-2xl border border-red-500/20 hover:bg-red-500/20 transition-colors"
+            >
+              <X size={18} />
+              <span className="text-xs font-semibold">Reset All Data</span>
+            </button>
           </div>
         </section>
 

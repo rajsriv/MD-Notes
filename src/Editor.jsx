@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { Markdown } from '@tiptap/markdown';
@@ -18,6 +18,7 @@ import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
+import db from './db';
 const Mathematics = Node.create({
   name: 'mathematics',
   group: 'inline',
@@ -277,14 +278,22 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, pre
   const { id } = useParams();
   const navigate = useNavigate();
   const initialContent = useMemo(() => {
-    if (id) return '';
-    const savedDocs = JSON.parse(localStorage.getItem('readmeMaker_docs') || '[]');
-    return savedDocs.length === 0 ? DEFAULT_MARKDOWN : '';
+    // We'll handle content setting in useEffect to support async DB loading
+    return '';
   }, [id]);
   const [markdown, setMarkdown] = useState(initialContent);
   const [title, setTitle] = useState('');
   const [activeTab, setActiveTab] = useState('editor');
   const [isToolbarExpanded, setIsToolbarExpanded] = useState(false);
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const initialType = queryParams.get('type') || 'markdown';
+  
+  const [docType, setDocType] = useState(initialType);
+  const [isFreeMode, setIsFreeMode] = useState(false);
+  const [canvasElements, setCanvasElements] = useState([]);
+  const [activeElementId, setActiveElementId] = useState(null);
+  const [guides, setGuides] = useState({ x: [], y: [] });
 
 
   const [copied, setCopied] = useState(false);
@@ -334,20 +343,49 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, pre
     }
   }, [isReadingMode, editor]);
   useEffect(() => {
-    if (id && editor) {
-      const savedDocs = JSON.parse(localStorage.getItem('readmeMaker_docs') || '[]');
-      const doc = savedDocs.find(d => d.id === id);
-      if (doc) {
-        setTitle(doc.title || '');
-        setMarkdown(doc.content || '');
-        setNoteAccent(doc.accentColor || null);
-        const jsonContent = editor.storage.markdown.manager.parse(doc.content || '');
-        editor.commands.setContent(jsonContent, false);
+    const loadContent = async () => {
+      if (!editor) return;
+
+      if (id) {
+        const doc = await db.getDocById(id);
+        if (doc) {
+          setTitle(doc.title || '');
+          setMarkdown(doc.content || '');
+          setNoteAccent(doc.accentColor || null);
+          setDocType(doc.type || 'markdown');
+          
+          if (doc.type === 'plain' && doc.content.startsWith('{')) {
+            try {
+              const data = JSON.parse(doc.content);
+              setCanvasElements(data.elements || []);
+              setIsFreeMode(data.isFreeMode || false);
+              // Set content to the main editor if present
+              const jsonContent = editor.storage.markdown.manager.parse(data.mainContent || '');
+              editor.commands.setContent(jsonContent, false);
+            } catch (e) {
+              const jsonContent = editor.storage.markdown.manager.parse(doc.content || '');
+              editor.commands.setContent(jsonContent, false);
+            }
+          } else {
+            const jsonContent = editor.storage.markdown.manager.parse(doc.content || '');
+            editor.commands.setContent(jsonContent, false);
+          }
+        }
+      } else {
+        const savedDocs = await db.getDocs();
+        if (savedDocs.length === 0 && initialType === 'markdown') {
+          setTitle('Welcome to MD-Notes');
+          setMarkdown(DEFAULT_MARKDOWN);
+          const jsonContent = editor.storage.markdown.manager.parse(DEFAULT_MARKDOWN);
+          editor.commands.setContent(jsonContent, false);
+        } else if (initialType === 'plain') {
+          setTitle('New Design');
+          setMarkdown('');
+          editor.commands.setContent('', false);
+        }
       }
-    } else if (!id && editor && initialContent !== '') {
-      const jsonContent = editor.storage.markdown.manager.parse(initialContent);
-      editor.commands.setContent(jsonContent, false);
-    }
+    };
+    loadContent();
   }, [id, editor]);
 
 
@@ -436,20 +474,21 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, pre
           const finalTitle = newTitle.trim();
           setTitle(finalTitle);
           if (id) {
-            const savedDocs = JSON.parse(localStorage.getItem('readmeMaker_docs') || '[]');
-            const updatedDocs = savedDocs.map(d =>
-              d.id === id ? { ...d, title: finalTitle, lastModified: Date.now() } : d
-            );
-            localStorage.setItem('readmeMaker_docs', JSON.stringify(updatedDocs));
+            const update = async () => {
+              const doc = await db.getDocById(id);
+              if (doc) {
+                await db.saveDoc({ ...doc, title: finalTitle, lastModified: Date.now() });
+              }
+            };
+            update();
           }
         }
       }
     });
   };
-  const handleSave = () => {
-    const savedDocs = JSON.parse(localStorage.getItem('readmeMaker_docs') || '[]');
+  const handleSave = async () => {
     let docTitle = title;
-    if (!docTitle || docTitle === 'Untitled Document') {
+    if (!docTitle || docTitle === 'Untitled Document' || docTitle === 'Welcome to MD-Notes') {
       const lines = markdown.split('\n').map(l => l.trim()).filter(l => l.length > 0);
       if (lines.length > 0) {
         const firstLine = lines[0];
@@ -459,26 +498,114 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, pre
         docTitle = 'Untitled Document';
       }
     }
-    if (id) {
-      const updatedDocs = savedDocs.map(d =>
-        d.id === id ? { ...d, title: docTitle, content: markdown, lastModified: Date.now(), accentColor: noteAccent } : d
-      );
-      localStorage.setItem('readmeMaker_docs', JSON.stringify(updatedDocs));
-      alert('Document saved successfully!');
-    } else {
-      const newId = Date.now().toString();
-      const newDoc = {
-        id: newId,
-        title: docTitle,
-        content: markdown,
-        lastModified: Date.now(),
-        accentColor: noteAccent
-      };
-      savedDocs.push(newDoc);
-      localStorage.setItem('readmeMaker_docs', JSON.stringify(savedDocs));
-      navigate(`/editor/${newId}`);
+    
+    const docId = id || Date.now().toString();
+    
+    let contentToSave = markdown;
+    if (docType === 'plain') {
+      contentToSave = JSON.stringify({
+        mainContent: markdown,
+        elements: canvasElements,
+        isFreeMode
+      });
+    }
+
+    const doc = {
+      id: docId,
+      title: docTitle,
+      content: contentToSave,
+      lastModified: Date.now(),
+      accentColor: noteAccent,
+      type: docType
+    };
+
+    try {
+      await db.saveDoc(doc);
+      if (!id) {
+        navigate(`/editor/${docId}`);
+      } else {
+        alert('Document saved successfully!');
+      }
+    } catch (e) {
+      alert('An error occurred while saving.');
     }
   };
+  const startDrag = (e, id) => {
+    if (!isFreeMode) return;
+    e.preventDefault();
+    setActiveElementId(id);
+    const el = canvasElements.find(item => item.id === id);
+    if (!el) return;
+
+    const startX = e.clientX || e.touches?.[0].clientX;
+    const startY = e.clientY || e.touches?.[0].clientY;
+    
+    const initialX = el.x;
+    const initialY = el.y;
+
+    const onMove = (moveEvent) => {
+      const currentX = moveEvent.clientX || moveEvent.touches?.[0].clientX;
+      const currentY = moveEvent.clientY || moveEvent.touches?.[0].clientY;
+      
+      let nextX = initialX + (currentX - startX);
+      let nextY = initialY + (currentY - startY);
+
+      // Snapping & Guidelines logic
+      const SNAP_THRESHOLD = 15;
+      const newGuides = { x: [], y: [] };
+      
+      // Center guideline
+      const centerX = window.innerWidth / 2;
+      if (Math.abs(nextX + el.width/2 - centerX) < SNAP_THRESHOLD) {
+        nextX = centerX - el.width/2;
+        newGuides.x.push(centerX);
+      }
+
+      // Snap to other elements
+      canvasElements.forEach(other => {
+        if (other.id === id) return;
+        
+        // Horizontal snapping (Left, Center, Right)
+        if (Math.abs(nextX - other.x) < SNAP_THRESHOLD) {
+          nextX = other.x;
+          newGuides.x.push(other.x);
+        }
+        if (Math.abs(nextX + el.width - (other.x + other.width)) < SNAP_THRESHOLD) {
+          nextX = other.x + other.width - el.width;
+          newGuides.x.push(other.x + other.width);
+        }
+
+        // Vertical snapping (Top, Bottom)
+        if (Math.abs(nextY - other.y) < SNAP_THRESHOLD) {
+          nextY = other.y;
+          newGuides.y.push(other.y);
+        }
+        if (Math.abs(nextY + el.height - (other.y + other.height)) < SNAP_THRESHOLD) {
+          nextY = other.y + other.height - el.height;
+          newGuides.y.push(other.y + other.height);
+        }
+      });
+
+      setGuides(newGuides);
+      setCanvasElements(prev => prev.map(item => 
+        item.id === id ? { ...item, x: nextX, y: nextY } : item
+      ));
+    };
+
+    const onEnd = () => {
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onEnd);
+      setGuides({ x: [], y: [] });
+    };
+
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onEnd);
+  };
+
+  const removeElement = (id) => {
+    setCanvasElements(prev => prev.filter(el => el.id !== id));
+  };
+
   const handleCopy = async () => {
     const content = editor ? editor.getMarkdown() : markdown;
     if (!content) return;
@@ -492,17 +619,34 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, pre
     }
   };
 
-  const handleUpdateNoteAccent = (color) => {
+  const handleUpdateNoteAccent = async (color) => {
     setNoteAccent(color);
     if (id) {
-      const savedDocs = JSON.parse(localStorage.getItem('readmeMaker_docs') || '[]');
-      const updatedDocs = savedDocs.map(d => 
-        d.id === id ? { ...d, accentColor: color } : d
-      );
-      localStorage.setItem('readmeMaker_docs', JSON.stringify(updatedDocs));
+      const doc = await db.getDocById(id);
+      if (doc) {
+        await db.saveDoc({ ...doc, accentColor: color });
+      }
     }
     setIsColorPickerOpen(false);
   };
+  const handleInsertImage = (url) => {
+    if (docType === 'plain') {
+      const newEl = {
+        id: Date.now().toString(),
+        type: 'image',
+        src: url,
+        x: 100,
+        y: editorScrollRef.current.scrollTop + 100,
+        width: 300,
+        height: 200
+      };
+      setCanvasElements(prev => [...prev, newEl]);
+    } else {
+      editor.chain().focus().setImage({ src: url }).run();
+    }
+    setIsImageDialogOpen(false);
+  };
+
   return (
     <div className="h-screen w-full flex flex-col bg-[var(--bg-color)] transition-colors duration-300 text-[#111] dark:text-[#eee] overflow-hidden relative selection:bg-[var(--accent-color)]/20">
       <Dialog {...dialogConfig} onCancel={closeDialog} />
@@ -573,9 +717,66 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, pre
         }}
       >
         <div className={`flex-1 flex flex-col h-full absolute inset-0 transition-all duration-500 ${activeTab === 'editor' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'} ${preferences.paperSlide && activeTab === 'code' ? '-translate-x-10' : 'translate-x-0'}`}>
-          <main ref={editorScrollRef} className="flex-1 overflow-auto px-6 z-10 no-scrollbar pb-52 pt-20 max-w-2xl mx-auto w-full spring-scroll">
-            <div className="markdown-preview focus:outline-none" style={{ fontSize: `${textSize}%` }}>
-              <EditorContent editor={editor} />
+          <main 
+            ref={editorScrollRef} 
+            className={`flex-1 overflow-auto px-6 z-10 no-scrollbar pb-52 pt-20 max-w-2xl mx-auto w-full spring-scroll ${docType === 'plain' ? 'relative bg-white/30 dark:bg-black/10' : ''}`}
+          >
+            <div className={`relative ${docType === 'plain' ? 'min-h-[1000px]' : ''}`}>
+              {/* Guidelines */}
+              {guides.y.map((y, i) => (
+                <div key={`y-${i}`} className="absolute left-0 right-0 h-px bg-[var(--accent-color)]/40 z-50 pointer-events-none" style={{ top: y }} />
+              ))}
+              {guides.x.map((x, i) => (
+                <div key={`x-${i}`} className="absolute top-0 bottom-0 w-px bg-[var(--accent-color)]/40 z-50 pointer-events-none" style={{ left: x }} />
+              ))}
+
+              <div 
+                className="markdown-preview focus:outline-none relative z-10" 
+                style={{ 
+                  fontSize: `${textSize}%`,
+                  // Fixed vs Free-form layout logic
+                  display: isFreeMode && docType === 'plain' ? 'block' : 'block'
+                }}
+              >
+                <EditorContent editor={editor} />
+              </div>
+
+              {/* Canvas Elements (Images, etc.) */}
+              {docType === 'plain' && canvasElements.map(el => (
+                <div
+                  key={el.id}
+                  onPointerDown={(e) => startDrag(e, el.id)}
+                  className={`absolute z-20 cursor-move transition-shadow ${activeElementId === el.id ? 'ring-2 ring-[var(--accent-color)] shadow-xl' : 'hover:ring-1 hover:ring-[var(--accent-color)]/30'}`}
+                  style={{
+                    left: el.x,
+                    top: el.y,
+                    width: el.width,
+                    height: el.height,
+                    // If not free mode, we'll need to figure out how they sit in flow
+                    position: isFreeMode ? 'absolute' : 'relative',
+                    float: !isFreeMode ? 'left' : 'none',
+                    marginRight: !isFreeMode ? '1.5rem' : '0',
+                    marginBottom: !isFreeMode ? '1.5rem' : '0',
+                    shapeOutside: !isFreeMode ? 'inset(0%)' : 'none',
+                  }}
+                >
+                  {el.type === 'image' ? (
+                    <img src={el.src} alt="" className="w-full h-full object-cover rounded-xl shadow-sm pointer-events-none" />
+                  ) : (
+                    <div className="p-4 bg-white dark:bg-[#1a1a1a] rounded-xl shadow-sm border border-[#e5e5e0] dark:border-[#333]">
+                      {el.content}
+                    </div>
+                  )}
+                  {activeElementId === el.id && (
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); removeElement(el.id); }}
+                      className="absolute -top-3 -right-3 p-1.5 bg-red-500 text-white rounded-full shadow-lg"
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
           </main>
         </div>
@@ -638,7 +839,7 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, pre
               >
                 Read
               </button>
-              {!isReadingMode && (
+              {docType === 'markdown' && !isReadingMode && (
                 <button
                   onClick={() => setActiveTab('code')}
                   className={`relative z-10 px-3 py-1 rounded-full text-[12px] font-medium transition-all duration-300 ${activeTab === 'code' ? 'text-black dark:text-white' : 'text-[#666] dark:text-[#999] hover:text-black dark:hover:text-white'}`}
@@ -647,6 +848,22 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, pre
                 </button>
               )}
             </div>
+            {docType === 'plain' && !isReadingMode && (
+              <div className="flex items-center gap-1.5 bg-[#f0f0ea] dark:bg-[#252525] p-1 rounded-full ml-2">
+                <button 
+                  onClick={() => setIsFreeMode(false)}
+                  className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all ${!isFreeMode ? 'bg-white dark:bg-[#444] text-black dark:text-white shadow-sm' : 'text-[#888]'}`}
+                >
+                  Fixed
+                </button>
+                <button 
+                  onClick={() => setIsFreeMode(true)}
+                  className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all ${isFreeMode ? 'bg-white dark:bg-[#444] text-black dark:text-white shadow-sm' : 'text-[#888]'}`}
+                >
+                  Free
+                </button>
+              </div>
+            )}
             <div className="flex items-center gap-1">
               <button
                 onClick={handleCopy}

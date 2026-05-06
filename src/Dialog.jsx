@@ -18,8 +18,39 @@ function Dialog({ isOpen, title, message, type = 'prompt', defaultValue = '', on
     if (file) {
       const reader = new FileReader();
       reader.onload = (event) => {
-        onConfirm(event.target.result);
-        onCancel();
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          // Max dimensions for storage optimization
+          const MAX_WIDTH = 1200;
+          const MAX_HEIGHT = 1200;
+          
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Compress as JPEG (0.7 quality is a good balance between size and quality)
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          onConfirm(dataUrl);
+          onCancel();
+        };
+        img.src = event.target.result;
       };
       reader.readAsDataURL(file);
     }

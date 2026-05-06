@@ -6,6 +6,7 @@ import Dialog from './Dialog';
 import Onboarding from './Onboarding';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
+import db from './db';
 
 const MARKDOWN_GUIDE = `# Markdown Essentials 📝
 
@@ -81,6 +82,7 @@ function Home({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, prefe
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [ripples, setRipples] = useState([]);
+  const [showFormatSelector, setShowFormatSelector] = useState(false);
   const navigate = useNavigate();
   const timerRef = useRef(null);
 
@@ -93,57 +95,73 @@ function Home({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, prefe
     { name: 'Violet', color: '#7c3aed' },
   ];
   const closeDialog = () => setDialogConfig(prev => ({ ...prev, isOpen: false }));
-  const toggleViewMode = () => {
+  const toggleViewMode = async () => {
     const newMode = viewMode === 'list' ? 'grid' : 'list';
     setViewMode(newMode);
-    localStorage.setItem('readmeMaker_viewMode', newMode);
+    await db.setPreference('readmeMaker_viewMode', newMode);
   };
   const stripMarkdown = (md) => {
     if (!md) return '';
+    // If it looks like JSON (Plain format), parse it and get mainContent
+    if (md.startsWith('{')) {
+      try {
+        const data = JSON.parse(md);
+        md = data.mainContent || '';
+      } catch (e) {
+        // Not JSON, continue with original string
+      }
+    }
     return md
-      .replace(/[#*`_~>\[\]\(\)-]/g, '')
-      .replace(/\s+/g, ' ')
+      .replace(/[#*`~_]/g, '')
+      .replace(/\[(.*?)\]\(.*?\)/g, '$1')
       .trim();
   };
   useEffect(() => {
-    const savedDocs = JSON.parse(localStorage.getItem('readmeMaker_docs') || '[]');
-    if (savedDocs.length === 0) {
-      const now = Date.now();
-      const templates = [
-        {
-          id: 'markdown-guide-' + now,
-          title: 'Markdown Essentials',
-          content: MARKDOWN_GUIDE,
-          lastModified: now + 100,
-          accentColor: '#2563eb' // Blue
-        },
-        {
-          id: 'latex-guide-' + now,
-          title: 'LaTeX Math Guide',
-          content: LATEX_GUIDE,
-          lastModified: now,
-          accentColor: '#7c3aed' // Violet
+    const init = async () => {
+      const savedMode = await db.getPreference('readmeMaker_viewMode', 'list');
+      setViewMode(savedMode);
+
+      const savedDocs = await db.getDocs();
+      if (savedDocs.length === 0) {
+        const now = Date.now();
+        const templates = [
+          {
+            id: 'markdown-guide-' + now,
+            title: 'Markdown Essentials',
+            content: MARKDOWN_GUIDE,
+            lastModified: now + 100,
+            accentColor: '#2563eb' // Blue
+          },
+          {
+            id: 'latex-guide-' + now,
+            title: 'LaTeX Math Guide',
+            content: LATEX_GUIDE,
+            lastModified: now,
+            accentColor: '#7c3aed' // Violet
+          }
+        ];
+        for (const template of templates) {
+          await db.saveDoc(template);
         }
-      ];
-      localStorage.setItem('readmeMaker_docs', JSON.stringify(templates));
-      setDocs(templates);
-    } else {
-      loadDocs();
-    }
-    
-    const hasOnboarded = localStorage.getItem('mdnotes_onboarded');
-    if (!hasOnboarded) {
-      setShowOnboarding(true);
-    }
+        setDocs(templates);
+      } else {
+        setDocs(savedDocs);
+      }
+      
+      const hasOnboardedStr = await db.getPreference('mdnotes_onboarded', 'false');
+      if (hasOnboardedStr !== 'true') {
+        setShowOnboarding(true);
+      }
+    };
+    init();
   }, []);
 
-  const handleOnboardingComplete = () => {
-    localStorage.setItem('mdnotes_onboarded', 'true');
+  const handleOnboardingComplete = async () => {
+    await db.setPreference('mdnotes_onboarded', 'true');
     setShowOnboarding(false);
   };
-  const loadDocs = () => {
-    const savedDocs = JSON.parse(localStorage.getItem('readmeMaker_docs') || '[]');
-    savedDocs.sort((a, b) => b.lastModified - a.lastModified);
+  const loadDocs = async () => {
+    const savedDocs = await db.getDocs();
     setDocs(savedDocs);
   };
   const handlePointerDown = (id) => {
@@ -187,9 +205,10 @@ function Home({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, prefe
       type: 'confirm',
       title: 'Delete Documents',
       message: `Are you sure you want to delete ${selectedIds.size} document(s)? This action cannot be undone.`,
-      onConfirm: () => {
+      onConfirm: async () => {
+        const idsToDelete = Array.from(selectedIds);
+        await db.deleteDocs(idsToDelete);
         const newDocs = docs.filter(d => !selectedIds.has(d.id));
-        localStorage.setItem('readmeMaker_docs', JSON.stringify(newDocs));
         setDocs(newDocs);
         setIsSelectionMode(false);
         setSelectedIds(new Set());
@@ -205,10 +224,10 @@ function Home({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, prefe
         type: 'prompt',
         title: 'Rename Document',
         defaultValue: doc.title || 'Untitled Document',
-        onConfirm: (newTitle) => {
+        onConfirm: async (newTitle) => {
           if (newTitle !== null && newTitle.trim() !== '') {
-            const updatedDocs = docs.map(d => d.id === id ? { ...d, title: newTitle.trim(), lastModified: Date.now() } : d);
-            localStorage.setItem('readmeMaker_docs', JSON.stringify(updatedDocs));
+            const title = newTitle.trim();
+            await db.saveDoc({ ...doc, title, lastModified: Date.now() });
             loadDocs();
           }
           setIsSelectionMode(false);
@@ -516,14 +535,14 @@ function Home({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, prefe
                       }`}
                     />
                     <button 
-                      onClick={() => { setViewMode('grid'); localStorage.setItem('readmeMaker_viewMode', 'grid'); }}
+                      onClick={() => toggleViewMode()}
                       className={`relative z-10 p-1.5 rounded-full transition-colors duration-300 ${viewMode === 'grid' ? 'text-black dark:text-white' : 'text-[#666] dark:text-[#999] hover:text-black dark:hover:text-white'}`}
                       title="Grid View"
                     >
                       <LayoutGrid size={16} strokeWidth={1.5} />
                     </button>
                     <button 
-                      onClick={() => { setViewMode('list'); localStorage.setItem('readmeMaker_viewMode', 'list'); }}
+                      onClick={() => toggleViewMode()}
                       className={`relative z-10 p-1.5 rounded-full transition-colors duration-300 ${viewMode === 'list' ? 'text-black dark:text-white' : 'text-[#666] dark:text-[#999] hover:text-black dark:hover:text-white'}`}
                       title="List View"
                     >
@@ -551,19 +570,69 @@ function Home({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, prefe
                   >
                     <CheckSquare size={16} strokeWidth={1.5} />
                   </button>
-                  <Link 
-                    to="/editor"
+                  <button 
+                    onClick={() => setShowFormatSelector(true)}
                     className="p-1.5 bg-black dark:bg-white text-white dark:text-black rounded-full hover:bg-[#333] dark:hover:bg-[#eee] transition-colors flex items-center justify-center shrink-0 active:scale-95 ml-1"
                     title="New Note"
                   >
                     <Plus size={18} strokeWidth={2.5} />
-                  </Link>
+                  </button>
                 </div>
               </div>
             )}
           </div>
         </div>
       </div>
+      {/* Format Selection Overlay */}
+      {showFormatSelector && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-6">
+          <div 
+            className="absolute inset-0 bg-white/40 dark:bg-black/40 backdrop-blur-md transition-all duration-500"
+            onClick={() => setShowFormatSelector(false)}
+          />
+          <div className="relative w-full max-w-sm bg-white dark:bg-[#1a1a1a] rounded-[2.5rem] border border-[#e5e5e0] dark:border-[#333] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="p-8">
+              <h3 className="text-2xl font-serif text-black dark:text-white mb-2 text-center">New Document</h3>
+              <p className="text-sm font-serif text-[#666] dark:text-[#999] text-center italic mb-8">Choose your creative format</p>
+              
+              <div className="space-y-4">
+                <button 
+                  onClick={() => navigate('/editor?type=markdown')}
+                  className="w-full flex items-center gap-4 p-5 bg-[#f4f4f0] dark:bg-[#252525] rounded-2xl hover:scale-[1.02] active:scale-95 transition-all group border border-transparent hover:border-black/5 dark:hover:border-white/5"
+                >
+                  <div className="p-3 bg-black dark:bg-white text-white dark:text-black rounded-xl">
+                    <FileText size={24} strokeWidth={1.5} />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-sans font-bold text-black dark:text-white text-sm">MD Format</p>
+                    <p className="text-[11px] text-[#888] dark:text-[#666]">Standard Markdown editor</p>
+                  </div>
+                </button>
+
+                <button 
+                  onClick={() => navigate('/editor?type=plain')}
+                  className="w-full flex items-center gap-4 p-5 bg-[#f4f4f0] dark:bg-[#252525] rounded-2xl hover:scale-[1.02] active:scale-95 transition-all group border border-transparent hover:border-black/5 dark:hover:border-white/5"
+                >
+                  <div className="p-3 bg-[var(--accent-color)] text-white rounded-xl">
+                    <LayoutGrid size={24} strokeWidth={1.5} />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-sans font-bold text-black dark:text-white text-sm">Plain Format</p>
+                    <p className="text-[11px] text-[#888] dark:text-[#666]">Free-form canvas layout</p>
+                  </div>
+                </button>
+              </div>
+
+              <button 
+                onClick={() => setShowFormatSelector(false)}
+                className="w-full mt-8 py-3 text-xs font-sans font-bold text-[#aaa] hover:text-black dark:hover:text-white transition-colors uppercase tracking-widest"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
