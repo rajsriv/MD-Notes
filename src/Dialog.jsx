@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Upload, Link as LinkIcon } from 'lucide-react';
 
-function Dialog({ isOpen, title, message, type = 'prompt', defaultValue = '', onConfirm, onCancel, showUploadOption = false }) {
+function Dialog({ isOpen, title, message, type = 'prompt', defaultValue = '', onConfirm = () => {}, onCancel, showUploadOption = false }) {
   const [inputValue, setInputValue] = useState(defaultValue);
   const fileInputRef = useRef(null);
 
@@ -120,12 +120,14 @@ function Dialog({ isOpen, title, message, type = 'prompt', defaultValue = '', on
         )}
 
         <div className="flex justify-end gap-2 mt-8">
-          <button 
-            onClick={onCancel} 
-            className="px-5 py-2.5 rounded-full text-[14px] font-sans font-medium text-[#666] dark:text-[#999] hover:bg-[#f4f4f0] dark:hover:bg-[#333] hover:text-black dark:hover:text-white transition-colors"
-          >
-            Cancel
-          </button>
+          {type !== 'alert' && (
+            <button 
+              onClick={onCancel} 
+              className="px-5 py-2.5 rounded-full text-[14px] font-sans font-medium text-[#666] dark:text-[#999] hover:bg-[#f4f4f0] dark:hover:bg-[#333] hover:text-black dark:hover:text-white transition-colors"
+            >
+              Cancel
+            </button>
+          )}
           <button 
             onClick={() => {
               onConfirm(type === 'prompt' ? inputValue : true);
@@ -133,7 +135,7 @@ function Dialog({ isOpen, title, message, type = 'prompt', defaultValue = '', on
             }} 
             className="px-6 py-2.5 rounded-full text-[14px] font-sans font-medium bg-black dark:bg-white text-white dark:text-black hover:bg-[#333] dark:hover:bg-[#eee] transition-colors shadow-lg shadow-black/10 active:scale-95"
           >
-            {type === 'prompt' ? 'Save' : 'Confirm'}
+            {type === 'prompt' ? 'Save' : (type === 'alert' ? 'Got it' : 'Confirm')}
           </button>
         </div>
       </div>

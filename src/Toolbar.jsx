@@ -7,7 +7,16 @@ import {
 } from 'lucide-react';
 import Dialog from './Dialog';
 
-function Toolbar({ editor, setExternalDialog, closeExternalDialog, textSize, onUpdateTextSize }) {
+function Toolbar({ 
+  editor, 
+  setExternalDialog, 
+  closeExternalDialog, 
+  textSize, 
+  onUpdateTextSize,
+  isPlainMode,
+  onAddText,
+  onAddImage
+}) {
   const [, setUpdateCount] = useState(0);
 
   // Force re-render when editor state changes (selection, marks, etc.)
@@ -79,13 +88,18 @@ function Toolbar({ editor, setExternalDialog, closeExternalDialog, textSize, onU
     { icon: <CornerDownLeft size={16} />, label: 'Hard Break', action: () => editor.chain().focus().setHardBreak().run() },
     { divider: true },
     { icon: <Link size={16} />, label: 'Link', isActive: editor.isActive('link'), action: setLink },
-    { icon: <Image size={16} />, label: 'Image', isActive: editor.isActive('image'), action: setImage },
+    ...(!isPlainMode ? [{ icon: <Image size={16} />, label: 'Image', isActive: editor.isActive('image'), action: setImage }] : []),
     { divider: true },
     { icon: <List size={16} />, label: 'Unordered List', isActive: editor.isActive('bulletList'), action: () => editor.chain().focus().toggleBulletList().run() },
     { icon: <ListOrdered size={16} />, label: 'Ordered List', isActive: editor.isActive('orderedList'), action: () => editor.chain().focus().toggleOrderedList().run() },
     { icon: <CheckSquare size={16} />, label: 'Task List', isActive: editor.isActive('taskList'), action: () => editor.chain().focus().toggleTaskList().run() },
     { divider: true },
     { icon: <Sigma size={16} />, label: 'Mathematics', action: () => editor.chain().focus().insertContent('\n\n$$\nE = mc^2\n$$\n\n').run() },
+    ...(isPlainMode ? [
+      { divider: true },
+      { icon: <Type size={16} />, label: 'Add Text Box', action: onAddText },
+      { icon: <Image size={16} />, label: 'Add Image', action: onAddImage },
+    ] : []),
   ];
   return (
     <div className="flex items-center gap-1 overflow-x-auto no-scrollbar px-1">

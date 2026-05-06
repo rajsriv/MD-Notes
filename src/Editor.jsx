@@ -14,184 +14,13 @@ import { Save, ChevronLeft, Type, X, Sun, Moon, Copy, Check, Palette, BookOpen, 
 import { Link as RouterLink } from 'react-router-dom';
 import Dialog from './Dialog';
 import SettingsMenu from './SettingsMenu';
-import { Node, InputRule, mergeAttributes, PasteRule, Extension } from '@tiptap/core';
+import { Extension } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
-import katex from 'katex';
 import 'katex/dist/katex.min.css';
 import db from './db';
-const Mathematics = Node.create({
-  name: 'mathematics',
-  group: 'inline',
-  inline: true,
-  selectable: true,
-  atom: true,
-
-  addAttributes() {
-    return {
-      latex: { default: '' },
-      display: { default: false },
-    };
-  },
-
-  addStorage() {
-    return {
-      markdown: {
-        serialize: (state, node) => {
-          if (node.attrs.display) {
-            state.write(`\n\n$$\n${node.attrs.latex}\n$$\n\n`);
-          } else {
-            state.write(`$${node.attrs.latex}$`);
-          }
-        },
-        parse: {
-          setup: (markdownit) => {
-            // Optional: configure markdown-it if needed
-          },
-        },
-      },
-    };
-  },
-
-  parseHTML() {
-    return [
-      {
-        tag: 'span[data-latex]',
-        getAttrs: (el) => ({ latex: el.getAttribute('data-latex'), display: false }),
-      },
-      {
-        tag: 'div[data-latex]',
-        getAttrs: (el) => ({ latex: el.getAttribute('data-latex'), display: true }),
-      },
-    ];
-  },
-
-  renderHTML({ node, HTMLAttributes }) {
-    if (node.attrs.display) {
-      return ['div', mergeAttributes(HTMLAttributes, { 
-        'data-latex': node.attrs.latex,
-        class: 'math-node math-block-node' 
-      })];
-    }
-    return ['span', mergeAttributes(HTMLAttributes, { 
-      'data-latex': node.attrs.latex,
-      class: 'math-node math-inline-node'
-    })];
-  },
-
-  addInputRules() {
-    return [
-      new InputRule({
-        find: /\$\$([^$]+)\$\$$/,
-        handler: ({ state, range, match }) => {
-          const start = range.from;
-          const end = range.to;
-          const latex = match[1];
-          state.tr.replaceWith(start, end, this.type.create({ latex, display: true }));
-        },
-      }),
-      new InputRule({
-        find: /\$([^$]+)\$$/,
-        handler: ({ state, range, match }) => {
-          const start = range.from;
-          const end = range.to;
-          const latex = match[1];
-          state.tr.replaceWith(start, end, this.type.create({ latex, display: false }));
-        },
-      }),
-    ];
-  },
-
-  addPasteRules() {
-    return [
-      new PasteRule({
-        find: /\$\$([\s\S]+?)\$\$/g,
-        type: this.type,
-        getAttributes: match => ({ latex: match[1], display: true }),
-      }),
-      new PasteRule({
-        find: /\$([^$]+)\$/g,
-        type: this.type,
-        getAttributes: match => ({ latex: match[1], display: false }),
-      }),
-    ];
-  },
-
-  addProseMirrorPlugins() {
-    return [
-      new Plugin({
-        key: new PluginKey('math-auto-parse'),
-        appendTransaction: (transactions, oldState, newState) => {
-          if (!transactions.some(tr => tr.docChanged)) return;
-          
-          let tr = newState.tr;
-          let modified = false;
-
-          // Collect all matches first to avoid position issues during replacement
-          const matches = [];
-          newState.doc.descendants((node, pos) => {
-            if (node.isText) {
-              const text = node.text;
-              const regex = /\$\$([\s\S]+?)\$\$|\$([^$]+)\$/g;
-              let match;
-              while ((match = regex.exec(text)) !== null) {
-                const isBlock = !!match[1];
-                const latex = (match[1] || match[2]).trim();
-                matches.push({
-                  start: pos + match.index,
-                  end: pos + match.index + match[0].length,
-                  latex,
-                  display: isBlock
-                });
-              }
-            }
-          });
-
-          // Apply replacements from back to front
-          for (let i = matches.length - 1; i >= 0; i--) {
-            const { start, end, latex, display } = matches[i];
-            tr.replaceWith(start, end, this.type.create({ latex, display }));
-            modified = true;
-          }
-
-          return modified ? tr : null;
-        },
-      }),
-    ];
-  },
-
-  addNodeView() {
-    return ({ node, getPos }) => {
-      const dom = document.createElement(node.attrs.display ? 'div' : 'span');
-      dom.className = node.attrs.display ? 'math-node math-block-node' : 'math-node math-inline-node';
-      
-      const render = () => {
-        try {
-          katex.render(node.attrs.latex || '...', dom, {
-            displayMode: node.attrs.display,
-            throwOnError: false,
-          });
-        } catch (e) {
-          dom.textContent = node.attrs.latex;
-        }
-      };
-      
-      render();
-      return { 
-        dom,
-        update: (newNode) => {
-          if (newNode.type.name !== this.name) return false;
-          if (newNode.attrs.latex !== node.attrs.latex || newNode.attrs.display !== node.attrs.display) {
-            node = newNode;
-            render();
-          }
-          return true;
-        }
-      };
-    };
-  },
-});
-
+import Mathematics from './Mathematics';
+import CanvasElement from './CanvasElement';
 
 const FocusBlur = Extension.create({
   name: 'focusBlur',
@@ -270,6 +99,7 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, pre
   const [isFreeMode, setIsFreeMode] = useState(false);
   const [canvasElements, setCanvasElements] = useState([]);
   const [activeElementId, setActiveElementId] = useState(null);
+  const [activeCanvasEditor, setActiveCanvasEditor] = useState(null);
   const [guides, setGuides] = useState({ x: [], y: [] });
 
 
@@ -581,8 +411,40 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, pre
     document.addEventListener('pointerup', onEnd);
   };
 
+  const addCanvasElement = (type) => {
+    const id = Date.now().toString();
+    const newElement = type === 'text' ? {
+      id,
+      type: 'text',
+      x: 100,
+      y: 100,
+      width: 250,
+      height: 150,
+      rotation: 0,
+      content: '<p>Start writing here...</p>',
+      styles: { fontSize: 16 }
+    } : {
+      id,
+      type: 'image',
+      x: 150,
+      y: 150,
+      width: 200,
+      height: 200,
+      rotation: 0,
+      src: 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&q=80&w=2070'
+    };
+    
+    setCanvasElements(prev => [...prev, newElement]);
+    setActiveElementId(id);
+  };
+
+  const updateCanvasElement = (id, updates) => {
+    setCanvasElements(prev => prev.map(el => el.id === id ? { ...el, ...updates } : el));
+  };
+
   const removeElement = (id) => {
     setCanvasElements(prev => prev.filter(el => el.id !== id));
+    if (activeElementId === id) setActiveElementId(null);
   };
 
   const handleCopy = async () => {
@@ -698,9 +560,17 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, pre
         <div className={`flex-1 flex flex-col h-full absolute inset-0 transition-all duration-500 ${activeTab === 'editor' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'} ${preferences.paperSlide && activeTab === 'code' ? '-translate-x-10' : 'translate-x-0'}`}>
           <main 
             ref={editorScrollRef} 
-            className={`flex-1 overflow-auto px-6 z-10 no-scrollbar pb-52 pt-20 max-w-2xl mx-auto w-full spring-scroll ${docType === 'plain' ? 'relative bg-white/30 dark:bg-black/10' : ''}`}
+            className={`flex-1 overflow-auto px-6 z-10 no-scrollbar pb-52 pt-20 max-w-2xl mx-auto w-full spring-scroll ${docType === 'plain' ? 'relative bg-white/30 dark:bg-black/10 canvas-grid' : ''}`}
           >
-            <div className={`relative ${docType === 'plain' ? 'min-h-[1000px]' : ''}`}>
+            <div 
+              className={`relative ${docType === 'plain' ? 'min-h-[1000px]' : ''}`}
+              onClick={() => {
+                if (docType === 'plain') {
+                  setActiveElementId(null);
+                  setActiveCanvasEditor(null);
+                }
+              }}
+            >
               {/* Guidelines */}
               {guides.y.map((y, i) => (
                 <div key={`y-${i}`} className="absolute left-0 right-0 h-px bg-[var(--accent-color)]/40 z-50 pointer-events-none" style={{ top: y }} />
@@ -717,44 +587,36 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, pre
                   display: isFreeMode && docType === 'plain' ? 'block' : 'block'
                 }}
               >
-                <EditorContent editor={editor} />
+                {(!isFreeMode || docType !== 'plain') && (
+                  <EditorContent editor={editor} />
+                )}
               </div>
 
-              {/* Canvas Elements (Images, etc.) */}
+              {/* Canvas Elements (Images, Text Boxes, etc.) */}
               {docType === 'plain' && canvasElements.map(el => (
-                <div
+                <CanvasElement
                   key={el.id}
-                  onPointerDown={(e) => startDrag(e, el.id)}
-                  className={`absolute z-20 cursor-move transition-shadow ${activeElementId === el.id ? 'ring-2 ring-[var(--accent-color)] shadow-xl' : 'hover:ring-1 hover:ring-[var(--accent-color)]/30'}`}
-                  style={{
-                    left: el.x,
-                    top: el.y,
-                    width: el.width,
-                    height: el.height,
-                    // If not free mode, we'll need to figure out how they sit in flow
-                    position: isFreeMode ? 'absolute' : 'relative',
-                    float: !isFreeMode ? 'left' : 'none',
-                    marginRight: !isFreeMode ? '1.5rem' : '0',
-                    marginBottom: !isFreeMode ? '1.5rem' : '0',
-                    shapeOutside: !isFreeMode ? 'inset(0%)' : 'none',
+                  element={el}
+                  allElements={canvasElements}
+                  isFreeMode={isFreeMode}
+                  isReadingMode={isReadingMode}
+                  isActive={activeElementId === el.id}
+                  onUpdate={updateCanvasElement}
+                  onSelect={(id) => {
+                    setActiveElementId(id);
+                    if (el.type !== 'text') setActiveCanvasEditor(null);
                   }}
-                >
-                  {el.type === 'image' ? (
-                    <img src={el.src} alt="" className="w-full h-full object-cover rounded-xl shadow-sm pointer-events-none" />
-                  ) : (
-                    <div className="p-4 bg-white dark:bg-[#1a1a1a] rounded-xl shadow-sm border border-[#e5e5e0] dark:border-[#333]">
-                      {el.content}
-                    </div>
-                  )}
-                  {activeElementId === el.id && (
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); removeElement(el.id); }}
-                      className="absolute -top-3 -right-3 p-1.5 bg-red-500 text-white rounded-full shadow-lg"
-                    >
-                      <X size={12} />
-                    </button>
-                  )}
-                </div>
+                  onDelete={removeElement}
+                  onEditorFocus={(id, ed) => {
+                    setActiveElementId(id);
+                    setActiveCanvasEditor(ed);
+                  }}
+                  onEditorBlur={() => {
+                    // We don't necessarily want to clear the active editor on blur
+                    // as the user might be clicking tools in the capsule.
+                  }}
+                  currentTheme={currentTheme}
+                />
               ))}
             </div>
           </main>
@@ -830,19 +692,32 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, pre
               </div>
             )}
             {docType === 'plain' && !isReadingMode && (
-              <div className="flex items-center gap-1.5 bg-[#f0f0ea] dark:bg-[#252525] p-1 rounded-full ml-2">
-                <button 
-                  onClick={() => setIsFreeMode(false)}
-                  className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all ${!isFreeMode ? 'bg-white dark:bg-[#444] text-black dark:text-white shadow-sm' : 'text-[#888]'}`}
-                >
-                  Fixed
-                </button>
-                <button 
-                  onClick={() => setIsFreeMode(true)}
-                  className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all ${isFreeMode ? 'bg-white dark:bg-[#444] text-black dark:text-white shadow-sm' : 'text-[#888]'}`}
-                >
-                  Free
-                </button>
+              <div className="flex items-center gap-1 bg-[#f0f0ea] dark:bg-[#252525] p-0.5 rounded-full ml-1">
+                <div className="flex items-center p-0.5 bg-black/5 dark:bg-white/5 rounded-full">
+                  <button 
+                    onClick={() => {
+                      if (isFreeMode) {
+                        setDialogConfig({
+                          isOpen: true,
+                          type: 'alert',
+                          title: 'Switching to Fixed Mode',
+                          message: 'To maintain a structured layout, please create a new file for Fixed Mode writing. Free Mode layouts cannot be converted back.',
+                        });
+                        return;
+                      }
+                      setIsFreeMode(false);
+                    }}
+                    className={`px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-tighter transition-all ${!isFreeMode ? 'bg-white dark:bg-[#444] text-black dark:text-white shadow-sm' : 'text-[#888]'}`}
+                  >
+                    Fixed
+                  </button>
+                  <button 
+                    onClick={() => setIsFreeMode(true)}
+                    className={`px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-tighter transition-all ${isFreeMode ? 'bg-white dark:bg-[#444] text-black dark:text-white shadow-sm' : 'text-[#888]'}`}
+                  >
+                    Free
+                  </button>
+                </div>
               </div>
             )}
             <div className="flex items-center gap-1">
@@ -868,11 +743,38 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, pre
           >
             <div className="flex-1 overflow-hidden flex items-center h-full">
               <Toolbar
-                editor={editor}
+                editor={activeCanvasEditor || editor}
                 setExternalDialog={setDialogConfig}
                 closeExternalDialog={closeDialog}
                 textSize={textSize}
                 onUpdateTextSize={setTextSize}
+                isPlainMode={docType === 'plain'}
+                onAddText={() => addCanvasElement('text')}
+                onAddImage={() => {
+                  setDialogConfig({
+                    isOpen: true,
+                    type: 'prompt',
+                    title: 'Insert Image',
+                    defaultValue: '',
+                    showUploadOption: true,
+                    onConfirm: (url) => {
+                      if (url) {
+                        const id = Date.now().toString();
+                        setCanvasElements(prev => [...prev, {
+                          id,
+                          type: 'image',
+                          x: 150,
+                          y: 150,
+                          width: 200,
+                          height: 200,
+                          rotation: 0,
+                          src: url
+                        }]);
+                        setActiveElementId(id);
+                      }
+                    }
+                  });
+                }}
               />
             </div>
             <button

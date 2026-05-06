@@ -419,3 +419,23 @@ ul[data-type="taskList"] li[data-checked="true"] > div > p {
   text-rendering: auto !important;
 }
 
+.canvas-grid {
+  background-image: radial-gradient(#00000015 0.8px, transparent 0.8px);
+  background-size: 24px 24px;
+}
+.dark .canvas-grid {
+  background-image: radial-gradient(#ffffff15 0.8px, transparent 0.8px);
+}
+
+/* Canvas Prose Overrides */
+.canvas-prose {
+  max-width: none;
+}
+.canvas-prose h1 { font-size: 1.4rem !important; margin-top: 0.5rem !important; margin-bottom: 0.3rem !important; font-weight: 700 !important; line-height: 1.2 !important; }
+.canvas-prose h2 { font-size: 1.2rem !important; margin-top: 0.4rem !important; margin-bottom: 0.2rem !important; font-weight: 700 !important; line-height: 1.2 !important; }
+.canvas-prose h3 { font-size: 1.1rem !important; margin-top: 0.3rem !important; margin-bottom: 0.2rem !important; font-weight: 700 !important; line-height: 1.2 !important; }
+.canvas-prose p { margin-top: 0.25rem !important; margin-bottom: 0.25rem !important; line-height: 1.5 !important; }
+.canvas-prose ul, .canvas-prose ol { padding-left: 1.2rem !important; margin-top: 0.3rem !important; margin-bottom: 0.3rem !important; }
+.canvas-prose li { margin-bottom: 0.1rem !important; margin-top: 0.1rem !important; }
+.canvas-prose blockquote { margin-top: 0.4rem !important; margin-bottom: 0.4rem !important; padding-left: 0.75rem !important; }
+.canvas-prose ul[data-type="taskList"] { padding-left: 0 !important; }

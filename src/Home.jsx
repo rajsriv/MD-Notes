@@ -51,6 +51,95 @@ const LavaLamp = ({ currentTheme, globalAccent }) => {
   );
 };
 
+const NotePreview = ({ doc }) => {
+  if (doc.type === 'plain') {
+    let canvasData = { mainContent: '', elements: [] };
+    try {
+      canvasData = JSON.parse(doc.content || '{}');
+    } catch (e) {
+      canvasData.mainContent = doc.content;
+    }
+
+    const scale = 0.35;
+    const elements = canvasData.elements || [];
+    
+    // Calculate required height based on elements
+    const maxY = elements.reduce((max, el) => Math.max(max, el.y + el.height), 100);
+    const calculatedHeight = Math.min(300, Math.max(100, maxY * scale + 20));
+
+    return (
+      <div 
+        className="w-full relative p-2 canvas-grid opacity-60 overflow-hidden"
+        style={{ height: calculatedHeight }}
+      >
+        {canvasData.mainContent && !canvasData.mainContent.trim().startsWith('{') && (
+          <div 
+            className="text-[8px] font-serif leading-tight opacity-40 mb-2 line-clamp-6"
+            dangerouslySetInnerHTML={{ __html: canvasData.mainContent }}
+          />
+        )}
+        
+        {(canvasData.elements || []).map(el => (
+          <div 
+            key={el.id}
+            className="absolute border border-black/10 dark:border-white/10 rounded-sm bg-white/20 dark:bg-white/5 overflow-hidden"
+            style={{
+              left: el.x * scale,
+              top: el.y * scale,
+              width: el.width * scale,
+              height: el.height * scale,
+              transform: `rotate(${el.rotation || 0}deg)`,
+              zIndex: 1
+            }}
+          >
+            {el.type === 'image' ? (
+              <img src={el.src} className="w-full h-full object-cover opacity-80" alt="" />
+            ) : (
+              <div 
+                className="p-1 text-[6px] font-serif leading-tight text-[#666] dark:text-[#999] break-words scale-[0.8] origin-top-left"
+                dangerouslySetInnerHTML={{ __html: el.content }}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-3 prose prose-sm prose-slate dark:prose-invert max-w-none h-full overflow-hidden">
+      <div 
+        className={`text-[12.5px] font-serif leading-[1.6] text-[#444] dark:text-[#aaa] break-words ${
+          ['line-clamp-3', 'line-clamp-4', 'line-clamp-5', 'line-clamp-6'][
+            (doc.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % 4
+          ]
+        }`}
+        dangerouslySetInnerHTML={{ 
+          __html: (doc.content || '')
+            .replace(/\$\$([\s\S]+?)\$\$/g, (_, math) => {
+              try {
+                return `<div class="katex-preview-block my-1 text-[10px]">${katex.renderToString(math.trim(), { displayMode: true, throwOnError: false })}</div>`;
+              } catch (e) { return `$$${math}$$`; }
+            })
+            .replace(/\$([^$]+?)\$/g, (_, math) => {
+              try {
+                return `<span class="katex-preview-inline text-[10px]">${katex.renderToString(math.trim(), { displayMode: false, throwOnError: false })}</span>`;
+              } catch (e) { return `$${math}$`; }
+            })
+            .replace(/^# (.*$)/gm, '<h1 class="text-[14px] font-bold mb-1">$1</h1>')
+            .replace(/^## (.*$)/gm, '<h2 class="text-[12px] font-bold mb-1">$1</h2>')
+            .replace(/^### (.*$)/gm, '<h3 class="text-[11px] font-bold mb-0.5">$1</h3>')
+            .replace(/^\> (.*$)/gm, '<blockquote class="border-l-2 border-gray-300 pl-2 italic text-[11px]">$1</blockquote>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/^[-*] (.*$)/gm, '<li class="ml-2 list-none text-[11px]">• $1</li>')
+            .replace(/\n/g, '<br/>')
+        }} 
+      />
+    </div>
+  );
+};
+
 const MARKDOWN_GUIDE = `# Markdown Essentials
 
 Master the art of Markdown with this quick reference guide.
@@ -390,39 +479,10 @@ function Home({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, prefe
                         animationDelay: preferences.staggeredEntry ? `${docs.indexOf(doc) * 0.05}s` : '0s'
                       }}
                     >
-                      <div className="p-3.5 pointer-events-none overflow-hidden">
-                        <div className="prose prose-sm prose-slate dark:prose-invert max-w-none">
-                          <div 
-                            className={`text-[12.5px] font-serif leading-[1.6] text-[#444] dark:text-[#aaa] break-words ${
-                              ['line-clamp-3', 'line-clamp-4', 'line-clamp-5', 'line-clamp-6'][
-                                (doc.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % 4
-                              ]
-                            }`}
-                            dangerouslySetInnerHTML={{ 
-                              __html: (doc.content || '')
-                                .replace(/\$\$([\s\S]+?)\$\$/g, (_, math) => {
-                                  try {
-                                    return `<div class="katex-preview-block my-3">${katex.renderToString(math.trim(), { displayMode: true, throwOnError: false })}</div>`;
-                                  } catch (e) { return `$$${math}$$`; }
-                                })
-                                .replace(/\$([^$]+?)\$/g, (_, math) => {
-                                  try {
-                                    return `<span class="katex-preview-inline">${katex.renderToString(math.trim(), { displayMode: false, throwOnError: false })}</span>`;
-                                  } catch (e) { return `$${math}$`; }
-                                })
-                                .replace(/^# (.*$)/gm, '<h1 class="text-sm font-bold mb-1">$1</h1>')
-                                .replace(/^## (.*$)/gm, '<h2 class="text-xs font-bold mb-1">$1</h2>')
-                                .replace(/^### (.*$)/gm, '<h3 class="text-[11px] font-bold mb-0.5">$1</h3>')
-                                .replace(/^\> (.*$)/gm, '<blockquote class="border-l-2 border-gray-300 pl-2 italic">$1</blockquote>')
-                                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                                .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                                .replace(/^[-*] (.*$)/gm, '<li class="ml-2 list-none">• $1</li>')
-                                .replace(/\n/g, '<br/>')
-                            }} 
-                          />
-                        </div>
+                      <div className="p-0.5 pointer-events-none overflow-hidden relative bg-white/50 dark:bg-black/20 min-h-[80px]">
+                        <NotePreview doc={doc} />
                       </div>
-                      <div className="flex-shrink-0 bg-[#f9f9f9]/50 dark:bg-[#222] border-t border-[#f0f0ea] dark:border-[#333] p-3 pointer-events-none flex items-center justify-between">
+                      <div className="flex-shrink-0 bg-[#f9f9f9]/80 dark:bg-[#222]/80 backdrop-blur-sm border-t border-[#f0f0ea] dark:border-[#333] p-3 pointer-events-none flex items-center justify-between">
                         <div className="flex-1 overflow-hidden pr-2">
                           <h3 className="text-[13px] font-serif font-medium text-black dark:text-[#eee] mb-0.5 truncate">
                             {doc.title || 'Untitled Document'}
