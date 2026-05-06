@@ -68,6 +68,115 @@ function App() {
         }
       }
       
+      const seedTutorials = async () => {
+        const docs = await db.getDocs();
+        if (docs.length === 0) {
+          // 1. Markdown Tutorial
+          await db.saveDoc({
+            id: 'tutorial-md',
+            title: 'Markdown Essentials',
+            type: 'markdown',
+            lastModified: Date.now(),
+            content: `# Welcome to MD-Notes
+A beautifully crafted, **distraction-free** Markdown workspace.
+
+## Features
+- **Visual Editing**: Write naturally, just like in Word.
+- **Visual Assets**: Add images with captions.
+![Nature](https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&q=80&w=2070)
+*Capturing beauty in every pixel.*
+
+- **Mathematics**: Full LaTeX support via KaTeX.
+$$
+E = mc^2
+$$
+
+> "The palest ink is better than the best memory."`
+          });
+
+          await db.saveDoc({
+            id: 'tutorial-latex',
+            title: 'Mathematical Formulas',
+            type: 'markdown',
+            lastModified: Date.now() - 500,
+            content: `# LaTeX in MD-Notes
+The editor supports high-performance mathematical typesetting using KaTeX.
+
+## Inline Math
+You can include formulas within your text, like $a^2 + b^2 = c^2$, by wrapping them in single dollar signs.
+
+## Block Math
+For more complex equations, use double dollar signs:
+
+$$
+x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}
+$$
+
+### Calculus Example
+$$
+\\int_{a}^{b} x^2 dx = \\left[ \\frac{x^3}{3} \\right]_{a}^{b}
+$$
+
+### Matrices
+$$
+\\begin{pmatrix} 
+1 & 0 & 0 \\\\
+0 & 1 & 0 \\\\
+0 & 0 & 1 
+\\end{pmatrix}
+$$
+`
+          });
+
+          // 2. Free Mode Tutorial
+          const freeModeData = {
+            mainContent: "# Free Mode Masterclass\nExplore the creative canvas.",
+            isFreeMode: true,
+            elements: [
+              {
+                id: 't1',
+                type: 'text',
+                x: 30,
+                y: 50,
+                width: 320,
+                height: 180,
+                rotation: -3,
+                content: '<h1>Creative Canvas</h1><p>Welcome to <b>Free Mode</b>. Here, your notes aren\'t just text—they are objects. Try dragging this box or rotating it using the handle at the top!</p>'
+              },
+              {
+                id: 't2',
+                type: 'image',
+                x: 180,
+                y: 220,
+                width: 200,
+                height: 180,
+                rotation: 4,
+                src: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&q=80&w=2000'
+              },
+              {
+                id: 't3',
+                type: 'text',
+                x: 30,
+                y: 420,
+                width: 340,
+                height: 160,
+                rotation: 0,
+                content: '<h3>Smart Wrapping</h3><p>Notice how this text <i>flows</i> around the camera image? Just move an image over a text box to activate the automatic text-wrapping engine.</p>'
+              }
+            ]
+          };
+
+          await db.saveDoc({
+            id: 'tutorial-free',
+            title: 'Free Mode Masterclass',
+            type: 'plain',
+            lastModified: Date.now() - 1000, // Older so it shows up after
+            content: JSON.stringify(freeModeData)
+          });
+        }
+      };
+
+      await seedTutorials();
       setIsDbReady(true);
     };
 

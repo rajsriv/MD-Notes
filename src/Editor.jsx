@@ -63,6 +63,9 @@ A beautifully crafted, **distraction-free** Markdown workspace for your thoughts
 - **Premium Reading**: Designed for a seamless, minimalist e-book reading aesthetic.
 - **Formatting Tools**: Tap the 'Aa' button to reveal the floating Notch Nook toolbar.
 - **Export**: Download your raw \`.md\` notes in one click.
+### Visual Assets
+![Nature](https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&q=80&w=2070)
+*Capturing beauty in every pixel.*
 ### Code Snippets
 \`\`\`javascript
 function captureIdea(idea) {
@@ -159,29 +162,36 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, pre
         const doc = await db.getDocById(id);
         if (doc) {
           setTitle(doc.title || '');
-          setMarkdown(doc.content || '');
           setNoteAccent(doc.accentColor || null);
           setDocType(doc.type || 'markdown');
-          
           if (doc.type === 'plain' && doc.content.startsWith('{')) {
             try {
               const data = JSON.parse(doc.content);
               setCanvasElements(data.elements || []);
               setIsFreeMode(data.isFreeMode || false);
+              const unwrappedContent = data.mainContent || '';
+              setMarkdown(unwrappedContent);
+              
               // Set content to the main editor if present
-              const jsonContent = editor.storage.markdown.manager.parse(data.mainContent || '');
+              const jsonContent = editor.storage.markdown.manager.parse(unwrappedContent);
               editor.commands.setContent(jsonContent, false);
             } catch (e) {
+              setMarkdown(doc.content || '');
               const jsonContent = editor.storage.markdown.manager.parse(doc.content || '');
               editor.commands.setContent(jsonContent, false);
             }
           } else {
+            setMarkdown(doc.content || '');
+            setIsFreeMode(false);
+            setCanvasElements([]);
             const jsonContent = editor.storage.markdown.manager.parse(doc.content || '');
             editor.commands.setContent(jsonContent, false);
           }
         }
       } else {
         const savedDocs = await db.getDocs();
+        setCanvasElements([]);
+        setIsFreeMode(initialType === 'plain');
         if (savedDocs.length === 0 && initialType === 'markdown') {
           setTitle('Welcome to MD-Notes');
           setMarkdown(DEFAULT_MARKDOWN);

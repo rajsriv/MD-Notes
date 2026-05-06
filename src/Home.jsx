@@ -678,33 +678,46 @@ function Home({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, prefe
           />
           <div className="relative w-full max-w-sm bg-white dark:bg-[#1a1a1a] rounded-[2.5rem] border border-[#e5e5e0] dark:border-[#333] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
             <div className="p-8">
-              <h3 className="text-2xl font-serif text-black dark:text-white mb-2 text-center">New Document</h3>
-              <p className="text-sm font-serif text-[#666] dark:text-[#999] text-center italic mb-8">Choose your creative format</p>
+              <h3 className="text-2xl font-serif text-black dark:text-white mb-2 text-center">Create New</h3>
+              <p className="text-sm font-serif text-[#666] dark:text-[#999] text-center italic mb-8">Choose your writing format</p>
               
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <button 
                   onClick={() => navigate('/editor?type=markdown')}
-                  className="w-full flex items-center gap-4 p-5 bg-[#f4f4f0] dark:bg-[#252525] rounded-2xl hover:scale-[1.02] active:scale-95 transition-all group border border-transparent hover:border-black/5 dark:hover:border-white/5"
+                  className="w-full flex items-center gap-4 p-4 bg-[#f4f4f0] dark:bg-[#252525] rounded-2xl hover:scale-[1.02] active:scale-95 transition-all group border border-transparent hover:border-black/5 dark:hover:border-white/5"
                 >
-                  <div className="p-3 bg-black dark:bg-white text-white dark:text-black rounded-xl">
-                    <FileText size={24} strokeWidth={1.5} />
+                  <div className="p-3 bg-black dark:bg-white text-white dark:text-black rounded-xl shadow-lg">
+                    <FileText size={20} strokeWidth={1.5} />
                   </div>
                   <div className="text-left">
-                    <p className="font-sans font-bold text-black dark:text-white text-sm">MD Format</p>
-                    <p className="text-[11px] text-[#888] dark:text-[#666]">Standard Markdown editor</p>
+                    <p className="font-sans font-bold text-black dark:text-white text-sm leading-tight">Markdown</p>
+                    <p className="text-[10px] text-[#888] dark:text-[#666]">Standard structured editor</p>
                   </div>
                 </button>
 
                 <button 
-                  onClick={() => navigate('/editor?type=plain')}
-                  className="w-full flex items-center gap-4 p-5 bg-[#f4f4f0] dark:bg-[#252525] rounded-2xl hover:scale-[1.02] active:scale-95 transition-all group border border-transparent hover:border-black/5 dark:hover:border-white/5"
+                  onClick={() => navigate('/editor?type=plain&mode=fixed')}
+                  className="w-full flex items-center gap-4 p-4 bg-[#f4f4f0] dark:bg-[#252525] rounded-2xl hover:scale-[1.02] active:scale-95 transition-all group border border-transparent hover:border-black/5 dark:hover:border-white/5"
                 >
-                  <div className="p-3 bg-[var(--accent-color)] text-white rounded-xl">
-                    <LayoutGrid size={24} strokeWidth={1.5} />
+                  <div className="p-3 bg-[#e5e5e0] dark:bg-[#333] text-black dark:text-white rounded-xl shadow-md">
+                    <List size={20} strokeWidth={1.5} />
                   </div>
                   <div className="text-left">
-                    <p className="font-sans font-bold text-black dark:text-white text-sm">Plain Format</p>
-                    <p className="text-[11px] text-[#888] dark:text-[#666]">Free-form canvas layout</p>
+                    <p className="font-sans font-bold text-black dark:text-white text-sm leading-tight">Fixed Layout</p>
+                    <p className="text-[10px] text-[#888] dark:text-[#666]">Structured canvas with blocks</p>
+                  </div>
+                </button>
+
+                <button 
+                  onClick={() => navigate('/editor?type=plain&mode=free')}
+                  className="w-full flex items-center gap-4 p-4 bg-[#f4f4f0] dark:bg-[#252525] rounded-2xl hover:scale-[1.02] active:scale-95 transition-all group border border-transparent hover:border-black/5 dark:hover:border-white/5"
+                >
+                  <div className="p-3 bg-[var(--accent-color)] text-white rounded-xl shadow-xl">
+                    <LayoutGrid size={20} strokeWidth={1.5} />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-sans font-bold text-black dark:text-white text-sm leading-tight">Free Canvas</p>
+                    <p className="text-[10px] text-[#888] dark:text-[#666]">Free-form draggable design</p>
                   </div>
                 </button>
               </div>

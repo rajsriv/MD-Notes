@@ -27,29 +27,81 @@ const CanvasElement = ({
   const [isResizing, setIsResizing] = useState(null); // 'nw', 'n', 'ne', etc.
   const [isRotating, setIsRotating] = useState(false);
 
-  // Auto-Wrap Logic: Calculate intersections with other images
+  // Auto-Wrap Logic: Calculate high-precision rotation-aware exclusions
   const exclusions = useMemo(() => {
     if (element.type !== 'text') return [];
     
-    return allElements
-      .filter(el => el.type === 'image' && el.id !== element.id)
-      .map(img => {
-        // Simple rectangular overlap in global space
-        // (Improving with rotation awareness later if needed)
-        const xOverlap = Math.max(0, Math.min(element.x + element.width, img.x + img.width) - Math.max(element.x, img.x));
-        const yOverlap = Math.max(0, Math.min(element.y + element.height, img.y + img.height) - Math.max(element.y, img.y));
-        
-        if (xOverlap > 0 && yOverlap > 0) {
-          return {
-            x: Math.max(0, img.x - element.x),
-            y: Math.max(0, img.y - element.y),
-            width: xOverlap,
-            height: yOverlap
-          };
+    const slices = [];
+    const SLICE_HEIGHT = 10; // Precision of the wrap
+    const textRect = { x: element.x, y: element.y, w: element.width, h: element.height };
+
+    allElements.filter(el => el.type === 'image').forEach(img => {
+      // 1. Calculate rotated corners of the image
+      const rad = ((img.rotation || 0) * Math.PI) / 180;
+      const cx = img.x + img.width / 2;
+      const cy = img.y + img.height / 2;
+      
+      const getRotatedPoint = (px, py) => {
+        const dx = px - cx;
+        const dy = py - cy;
+        return {
+          x: cx + dx * Math.cos(rad) - dy * Math.sin(rad),
+          y: cy + dx * Math.sin(rad) + dy * Math.cos(rad)
+        };
+      };
+
+      const corners = [
+        getRotatedPoint(img.x, img.y),
+        getRotatedPoint(img.x + img.width, img.y),
+        getRotatedPoint(img.x + img.width, img.y + img.height),
+        getRotatedPoint(img.x, img.y + img.height)
+      ];
+
+      // 2. Find vertical range of the image relative to text box
+      const minY = Math.min(...corners.map(p => p.y)) - textRect.y;
+      const maxY = Math.max(...corners.map(p => p.y)) - textRect.y;
+
+      // Only process if there's a vertical overlap
+      if (maxY <= 0 || minY >= textRect.h) return;
+
+      // 3. Slice the image vertically
+      for (let y = Math.max(0, Math.floor(minY / SLICE_HEIGHT) * SLICE_HEIGHT); y < Math.min(textRect.h, maxY); y += SLICE_HEIGHT) {
+        const currentY = textRect.y + y + SLICE_HEIGHT / 2;
+        const intersects = [];
+
+        // Check intersection of line y = currentY with each of the 4 edges
+        for (let i = 0; i < 4; i++) {
+          const p1 = corners[i];
+          const p2 = corners[(i + 1) % 4];
+          if ((p1.y <= currentY && p2.y > currentY) || (p2.y <= currentY && p1.y > currentY)) {
+            const ix = p1.x + (currentY - p1.y) * (p2.x - p1.x) / (p2.y - p1.y);
+            intersects.push(ix - textRect.x);
+          }
         }
-        return null;
-      })
-      .filter(Boolean);
+
+        if (intersects.length >= 2) {
+          const minX = Math.max(0, Math.min(...intersects));
+          const maxX = Math.min(textRect.w, Math.max(...intersects));
+          
+            slices.push({
+              y,
+              height: SLICE_HEIGHT,
+              minX,
+              maxX
+            });
+          }
+        }
+      });
+
+    // 4. Consolidate slices by Y coordinate to handle multiple images
+    const rowMap = {};
+    slices.forEach(s => {
+      if (!rowMap[s.y]) rowMap[s.y] = { y: s.y, height: s.height, minX: textRect.w, maxX: 0 };
+      rowMap[s.y].minX = Math.min(rowMap[s.y].minX, s.minX);
+      rowMap[s.y].maxX = Math.max(rowMap[s.y].maxX, s.maxX);
+    });
+
+    return Object.values(rowMap).sort((a, b) => a.y - b.y);
   }, [allElements, element]);
 
   // Initialize Tiptap for text boxes
@@ -268,19 +320,39 @@ const CanvasElement = ({
             className="w-full h-full p-3 prose prose-sm dark:prose-invert max-w-none canvas-prose focus:outline-none relative overflow-y-auto no-scrollbar"
             onClick={(e) => isActive && e.stopPropagation()}
           >
-            {/* Text Wrap Floats */}
-            {exclusions.map((ex, i) => (
-              <div 
-                key={i}
-                style={{
-                  float: ex.x < element.width / 2 ? 'left' : 'right',
-                  width: ex.width,
-                  height: ex.height,
-                  marginTop: ex.y,
-                  shapeOutside: 'inset(0%)',
-                  pointerEvents: 'none'
-                }}
-              />
+            {/* Text Wrap Floats (Precision Slicing) */}
+            {exclusions.map((row, i) => (
+              <React.Fragment key={i}>
+                {/* Left Side Float */}
+                {row.maxX > 0 && (
+                  <div 
+                    style={{
+                      float: 'left',
+                      clear: 'left',
+                      width: row.maxX + 10, // Add 10px gutter
+                      height: row.height,
+                      backgroundColor: 'transparent',
+                      pointerEvents: 'none',
+                      shapeOutside: 'inset(0%)'
+                    }}
+                  />
+                )}
+                {/* Right Side Float (positioned on same row using negative margin) */}
+                {row.minX < element.width && (
+                  <div 
+                    style={{
+                      float: 'right',
+                      clear: 'right',
+                      width: Math.max(0, element.width - row.minX + 10), // Add 10px gutter
+                      height: row.height,
+                      marginTop: `-${row.height}px`,
+                      backgroundColor: 'transparent',
+                      pointerEvents: 'none',
+                      shapeOutside: 'inset(0%)'
+                    }}
+                  />
+                )}
+              </React.Fragment>
             ))}
             <EditorContent editor={editor} />
           </div>
