@@ -7,7 +7,7 @@ import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Placeholder from '@tiptap/extension-placeholder';
 import Mathematics from './Mathematics';
-import { X, RotateCcw, Maximize2 } from 'lucide-react';
+import { X, RotateCcw, Edit3, Type, AlignLeft } from 'lucide-react';
 
 const CanvasElement = ({ 
   element, 
@@ -20,16 +20,23 @@ const CanvasElement = ({
   onEditorFocus,
   onEditorBlur,
   currentTheme,
-  isReadingMode
+  isReadingMode,
+  zoom = 1
 }) => {
   const elementRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(null); // 'nw', 'n', 'ne', etc.
   const [isRotating, setIsRotating] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Reset editing mode when selection changes
+  useEffect(() => {
+    if (!isActive) setIsEditing(false);
+  }, [isActive]);
 
   // Auto-Wrap Logic: Calculate high-precision rotation-aware exclusions
   const exclusions = useMemo(() => {
-    if (element.type !== 'text') return [];
+    if (element.type !== 'text' || element.noWrap) return [];
     
     const slices = [];
     const SLICE_HEIGHT = 10; // Precision of the wrap
@@ -116,13 +123,17 @@ const CanvasElement = ({
       Mathematics,
     ],
     content: element.content || '',
+    editable: false, // Start non-editable
     onUpdate: ({ editor }) => {
       if (element.type === 'text') {
         onUpdate(element.id, { content: editor.getHTML() });
       }
     },
     onFocus: () => onEditorFocus(element.id, editor),
-    onBlur: () => onEditorBlur(),
+    onBlur: () => {
+      onEditorBlur();
+      setIsEditing(false);
+    },
   }, [element.id]);
 
   // Update editor content if it changes externally (e.g., from DB load)
@@ -132,17 +143,23 @@ const CanvasElement = ({
     }
   }, [element.content, editor]);
 
-  // Handle Reading Mode (setEditable)
+  // Handle Editing Mode (setEditable)
   useEffect(() => {
     if (editor) {
-      editor.setEditable(!isReadingMode);
+      editor.setEditable(isEditing && !isReadingMode);
+      if (isEditing) {
+        editor.commands.focus();
+      }
     }
-  }, [isReadingMode, editor]);
+  }, [isEditing, isReadingMode, editor]);
 
   const handlePointerDown = (e, action) => {
     e.stopPropagation();
     onSelect(element.id);
     
+    // If we're editing, don't trigger drag from content
+    if (isEditing && action === 'drag') return;
+
     const startX = e.clientX;
     const startY = e.clientY;
     const initialX = element.x;
@@ -180,10 +197,9 @@ const CanvasElement = ({
       const dir = action.split('-')[1]; // nw, n, ne, etc.
 
       const onResizeMove = (moveEvent) => {
-        const dx = moveEvent.clientX - startX;
-        const dy = moveEvent.clientY - startY;
+        const dx = (moveEvent.clientX - startX) / zoom;
+        const dy = (moveEvent.clientY - startY) / zoom;
         
-        // Simple non-rotated resizing for now (improving this later)
         let newWidth = initialWidth;
         let newHeight = initialHeight;
         let newX = initialX;
@@ -223,8 +239,8 @@ const CanvasElement = ({
     if (!isFreeMode) return;
     setIsDragging(true);
     const onDragMove = (moveEvent) => {
-      const dx = moveEvent.clientX - startX;
-      const dy = moveEvent.clientY - startY;
+      const dx = (moveEvent.clientX - startX) / zoom;
+      const dy = (moveEvent.clientY - startY) / zoom;
       onUpdate(element.id, { x: initialX + dx, y: initialY + dy });
     };
 
@@ -237,6 +253,17 @@ const CanvasElement = ({
     document.addEventListener('pointermove', onDragMove);
     document.addEventListener('pointerup', onDragEnd);
   };
+
+  const TEXT_COLORS = [
+    { name: 'Default', color: 'inherit' },
+    { name: 'White', color: '#ffffff' },
+    { name: 'Gray', color: '#888888' },
+    { name: 'Red', color: '#ef4444' },
+    { name: 'Amber', color: '#f59e0b' },
+    { name: 'Emerald', color: '#10b981' },
+    { name: 'Blue', color: '#3b82f6' },
+    { name: 'Violet', color: '#8b5cf6' },
+  ];
 
   const handles = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
 
@@ -254,11 +281,12 @@ const CanvasElement = ({
       }}
       onPointerDown={(e) => {
         if (isReadingMode) return;
+        e.stopPropagation(); // Always stop propagation if we're clicking the element
+        if (isEditing) return;
         isFreeMode && handlePointerDown(e, 'drag');
       }}
       onClick={(e) => {
-        if (isReadingMode) return;
-        e.stopPropagation();
+        e.stopPropagation(); // Always stop propagation to prevent background deselection
       }}
     >
       {/* Selection Border */}
@@ -266,8 +294,8 @@ const CanvasElement = ({
         <div className="absolute -inset-1 border-2 border-[var(--accent-color)] rounded-lg pointer-events-none" />
       )}
 
-      {/* Rotation Handle */}
-      {isActive && isFreeMode && (
+      {/* Control Handles (Rotation) */}
+      {isActive && isFreeMode && !isEditing && (
         <div 
           className="absolute -top-12 left-1/2 -translate-x-1/2 w-px h-10 bg-[var(--accent-color)] flex flex-col items-center"
           onPointerDown={(e) => handlePointerDown(e, 'rotate')}
@@ -278,8 +306,8 @@ const CanvasElement = ({
         </div>
       )}
 
-      {/* Resizing Handles */}
-      {isActive && handles.map(h => (
+      {/* Resize Handles */}
+      {isActive && !isEditing && handles.map(h => (
         <div
           key={h}
           className={`absolute w-3 h-3 bg-white dark:bg-[#333] border-2 border-[var(--accent-color)] rounded-full shadow-sm z-30
@@ -296,18 +324,64 @@ const CanvasElement = ({
         />
       ))}
 
-      {/* Action Buttons (Delete) */}
-      {isActive && (
-        <button
-          onClick={(e) => { e.stopPropagation(); onDelete(element.id); }}
-          className="absolute -top-3 -right-3 w-6 h-6 bg-red-500 text-white rounded-full shadow-xl flex items-center justify-center z-40 hover:scale-110 transition-transform active:scale-95"
-        >
-          <X size={14} strokeWidth={3} />
-        </button>
+      {/* Element Toolbar (Bottom Actions) */}
+      {isActive && !isReadingMode && (
+        <div className="absolute -bottom-14 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-[60]">
+          {/* Color Picker Sub-toolbar */}
+          {element.type === 'text' && (
+            <div className="flex items-center gap-1.5 p-1.5 bg-white/80 dark:bg-[#1a1a1a]/80 backdrop-blur-xl rounded-full shadow-xl border border-black/5 dark:border-white/10 animate-in fade-in zoom-in-95 duration-300">
+              {TEXT_COLORS.map(c => (
+                <button
+                  key={c.name}
+                  onClick={(e) => { e.stopPropagation(); onUpdate(element.id, { textColor: c.color }); }}
+                  className={`w-5 h-5 rounded-full border border-black/5 dark:border-white/10 transition-transform hover:scale-125 ${element.textColor === c.color ? 'ring-2 ring-[var(--accent-color)] ring-offset-2 dark:ring-offset-[#1a1a1a]' : ''}`}
+                  style={{ backgroundColor: c.color === 'inherit' ? (currentTheme === 'light' ? '#000' : '#fff') : c.color }}
+                  title={c.name}
+                />
+              ))}
+            </div>
+          )}
+
+          <div className="flex items-center gap-2 p-1.5 bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-2xl border border-black/5 dark:border-white/10 animate-in slide-in-from-top-2 duration-300">
+            {element.type === 'text' && (
+              <>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setIsEditing(!isEditing); }}
+                  className={`p-2 rounded-xl transition-all ${isEditing ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg scale-110' : 'hover:bg-black/5 dark:hover:bg-white/5 text-[#666] dark:text-[#aaa]'}`}
+                  title="Edit Text"
+                >
+                  <Edit3 size={16} />
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onUpdate(element.id, { noWrap: !element.noWrap }); }}
+                  className={`p-2 rounded-xl transition-all ${!element.noWrap ? 'bg-[var(--accent-color)] text-white shadow-lg' : 'hover:bg-black/5 dark:hover:bg-white/5 text-[#666] dark:text-[#aaa]'}`}
+                  title="Toggle Text Wrap"
+                >
+                  <AlignLeft size={16} />
+                </button>
+              </>
+            )}
+            <div className="w-px h-4 bg-black/10 dark:bg-white/10 mx-1" />
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete(element.id); }}
+              className="p-2 rounded-xl text-red-500 hover:bg-red-500/10 transition-all"
+              title="Delete Element"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Content Rendering */}
-      <div className="w-full h-full overflow-hidden rounded-lg bg-transparent">
+      <div 
+        className={`w-full h-full overflow-hidden rounded-lg transition-all ${isEditing ? 'bg-white/80 dark:bg-black/80 backdrop-blur-md shadow-2xl border-2 border-[var(--accent-color)]' : 'bg-transparent'}`}
+        style={{ 
+          color: element.textColor || 'inherit',
+          fontSize: element.type === 'text' ? `${Math.max(12, (element.width / 300) * 16)}px` : 'inherit',
+          lineHeight: '1.4'
+        }}
+      >
         {element.type === 'image' ? (
           <img 
             src={element.src} 
@@ -318,18 +392,17 @@ const CanvasElement = ({
         ) : (
           <div 
             className="w-full h-full p-3 prose prose-sm dark:prose-invert max-w-none canvas-prose focus:outline-none relative overflow-y-auto no-scrollbar"
-            onClick={(e) => isActive && e.stopPropagation()}
+            onPointerDown={(e) => isEditing && e.stopPropagation()}
+            style={{ fontSize: 'inherit' }}
           >
-            {/* Text Wrap Floats (Precision Slicing) */}
-            {exclusions.map((row, i) => (
+            {!element.noWrap && exclusions.map((row, i) => (
               <React.Fragment key={i}>
-                {/* Left Side Float */}
                 {row.maxX > 0 && (
                   <div 
                     style={{
                       float: 'left',
                       clear: 'left',
-                      width: row.maxX + 10, // Add 10px gutter
+                      width: row.maxX + 10,
                       height: row.height,
                       backgroundColor: 'transparent',
                       pointerEvents: 'none',
@@ -337,13 +410,12 @@ const CanvasElement = ({
                     }}
                   />
                 )}
-                {/* Right Side Float (positioned on same row using negative margin) */}
                 {row.minX < element.width && (
                   <div 
                     style={{
                       float: 'right',
                       clear: 'right',
-                      width: Math.max(0, element.width - row.minX + 10), // Add 10px gutter
+                      width: Math.max(0, element.width - row.minX + 10),
                       height: row.height,
                       marginTop: `-${row.height}px`,
                       backgroundColor: 'transparent',

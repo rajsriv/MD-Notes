@@ -52,11 +52,11 @@ function App() {
     const initApp = async () => {
       await db.init();
       await db.migrateFromLocalStorage();
-      
+
       const theme = await db.getPreference('mdnotes_theme', 'light');
       const accent = await db.getPreference('mdnotes_global_accent', '#000000');
       const prefsJson = await db.getPreference('mdnotes_preferences', null);
-      
+
       setCurrentTheme(theme);
       setGlobalAccent(accent);
       if (prefsJson) {
@@ -67,7 +67,7 @@ function App() {
           console.error('Failed to parse preferences:', e);
         }
       }
-      
+
       const seedTutorials = async () => {
         const docs = await db.getDocs();
         if (docs.length === 0) {
@@ -128,7 +128,7 @@ Explore the creative canvas.`,
               {
                 id: 't1',
                 type: 'text',
-                x: 30,
+                x: 15,
                 y: 50,
                 width: 320,
                 height: 180,
@@ -138,7 +138,7 @@ Explore the creative canvas.`,
               {
                 id: 't2',
                 type: 'image',
-                x: 180,
+                x: 165,
                 y: 220,
                 width: 200,
                 height: 180,
@@ -148,7 +148,7 @@ Explore the creative canvas.`,
               {
                 id: 't3',
                 type: 'text',
-                x: 30,
+                x: 15,
                 y: 420,
                 width: 340,
                 height: 160,

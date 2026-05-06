@@ -10,7 +10,7 @@ import TaskItem from '@tiptap/extension-task-item';
 import Placeholder from '@tiptap/extension-placeholder';
 import Toolbar from './Toolbar';
 import CodeOutput from './CodeOutput';
-import { Save, ChevronLeft, Type, X, Sun, Moon, Copy, Check, Palette, BookOpen, Eye, EyeOff, Sigma, Settings } from 'lucide-react';
+import { Save, ChevronLeft, Type, X, Sun, Moon, Copy, Check, Palette, BookOpen, Eye, EyeOff, Sigma, Settings, Plus, Minus } from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
 import Dialog from './Dialog';
 import SettingsMenu from './SettingsMenu';
@@ -100,6 +100,12 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, pre
   const [activeElementId, setActiveElementId] = useState(null);
   const [activeCanvasEditor, setActiveCanvasEditor] = useState(null);
   const [guides, setGuides] = useState({ x: [], y: [] });
+  
+  // Canvas View State
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [lastTouch, setLastTouch] = useState(null);
+  const [lastDist, setLastDist] = useState(0);
 
 
   const [copied, setCopied] = useState(false);
@@ -564,68 +570,143 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, pre
         }}
       >
         <div className={`flex-1 flex flex-col h-full absolute inset-0 transition-all duration-500 ${activeTab === 'editor' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'} ${preferences.paperSlide && activeTab === 'code' ? '-translate-x-10' : 'translate-x-0'}`}>
-          <main 
-            ref={editorScrollRef} 
-            className={`flex-1 overflow-auto px-6 z-10 no-scrollbar pb-52 pt-20 max-w-2xl mx-auto w-full spring-scroll ${docType === 'plain' ? 'relative bg-white/30 dark:bg-black/10 canvas-grid' : ''}`}
-          >
-            <div 
-              className={`relative ${docType === 'plain' ? 'min-h-[1000px]' : ''}`}
-              onClick={() => {
-                if (docType === 'plain') {
-                  setActiveElementId(null);
-                  setActiveCanvasEditor(null);
-                }
-              }}
-            >
-              {/* Guidelines */}
-              {guides.y.map((y, i) => (
-                <div key={`y-${i}`} className="absolute left-0 right-0 h-px bg-[var(--accent-color)]/40 z-50 pointer-events-none" style={{ top: y }} />
-              ))}
-              {guides.x.map((x, i) => (
-                <div key={`x-${i}`} className="absolute top-0 bottom-0 w-px bg-[var(--accent-color)]/40 z-50 pointer-events-none" style={{ left: x }} />
-              ))}
+              {/* Zoom/Pan Controls & Indicator */}
+              {docType === 'plain' && (
+                <div className="fixed bottom-32 right-6 z-[100] flex flex-col items-center gap-2">
+                  <div className="bg-white/80 dark:bg-black/80 backdrop-blur-xl border border-black/5 dark:border-white/10 p-3 rounded-2xl shadow-2xl flex flex-col items-center gap-3">
+                    <button 
+                      onClick={() => setZoom(prev => Math.min(2, prev + 0.1))}
+                      className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-xl transition-all"
+                    >
+                      <Plus size={18} />
+                    </button>
+                    <div className="h-px w-6 bg-black/10 dark:bg-white/10" />
+                    <button 
+                      onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }}
+                      className="text-[10px] font-mono font-bold text-[#888] hover:text-black dark:hover:text-white"
+                    >
+                      {Math.round(zoom * 100)}%
+                    </button>
+                    <div className="h-px w-6 bg-black/10 dark:bg-white/10" />
+                    <button 
+                      onClick={() => setZoom(prev => Math.max(0.5, prev - 0.1))}
+                      className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-xl transition-all"
+                    >
+                      <Minus size={18} />
+                    </button>
+                  </div>
+                </div>
+              )}
 
-              <div 
-                className="markdown-preview focus:outline-none relative z-10" 
-                style={{ 
-                  fontSize: `${textSize}%`,
-                  // Fixed vs Free-form layout logic
-                  display: isFreeMode && docType === 'plain' ? 'block' : 'block'
+              <main 
+                ref={editorScrollRef} 
+                className={`flex-1 z-10 no-scrollbar pb-52 pt-20 mx-auto w-full ${docType === 'plain' ? 'absolute inset-0 bg-white/30 dark:bg-black/10 canvas-grid touch-none overflow-hidden' : 'max-w-2xl overflow-auto px-6 spring-scroll'}`}
+                onTouchStart={(e) => {
+                  if (docType !== 'plain' || e.touches.length !== 2) return;
+                  const dist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                  );
+                  setLastDist(dist);
+                  setLastTouch({
+                    x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+                    y: (e.touches[0].clientY + e.touches[1].clientY) / 2
+                  });
+                }}
+                onTouchMove={(e) => {
+                  if (docType !== 'plain' || e.touches.length !== 2 || !lastTouch) return;
+                  e.preventDefault(); // Prevent browser zoom/scroll
+                  
+                  // Handle Zoom (Smoother incremental)
+                  const dist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                  );
+                  
+                  if (lastDist > 0) {
+                    const zoomDelta = dist / lastDist;
+                    setZoom(prev => {
+                      const next = prev * zoomDelta;
+                      return Math.min(2, Math.max(0.4, next));
+                    });
+                  }
+                  setLastDist(dist);
+
+                  // Handle Pan (Unrestricted)
+                  const currentTouch = {
+                    x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+                    y: (e.touches[0].clientY + e.touches[1].clientY) / 2
+                  };
+                  const dx = currentTouch.x - lastTouch.x;
+                  const dy = currentTouch.y - lastTouch.y;
+                  
+                  setPan(prev => ({ x: prev.x + dx, y: prev.y + dy }));
+                  setLastTouch(currentTouch);
+                }}
+                onTouchEnd={() => {
+                  setLastTouch(null);
+                  setLastDist(0);
                 }}
               >
-                {(!isFreeMode || docType !== 'plain') && (
-                  <EditorContent editor={editor} />
-                )}
-              </div>
+                <div 
+                  className={`relative ${docType === 'plain' ? 'min-h-[1000px]' : ''}`}
+                  style={{
+                    transform: docType === 'plain' ? `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` : 'none',
+                    transformOrigin: 'top left'
+                  }}
+                  onClick={() => {
+                    if (docType === 'plain') {
+                      setActiveElementId(null);
+                      setActiveCanvasEditor(null);
+                    }
+                  }}
+                >
+                  {/* Guidelines */}
+                  {guides.y.map((y, i) => (
+                    <div key={`y-${i}`} className="absolute left-0 right-0 h-px bg-[var(--accent-color)]/40 z-50 pointer-events-none" style={{ top: y }} />
+                  ))}
+                  {guides.x.map((x, i) => (
+                    <div key={`x-${i}`} className="absolute top-0 bottom-0 w-px bg-[var(--accent-color)]/40 z-50 pointer-events-none" style={{ left: x }} />
+                  ))}
 
-              {/* Canvas Elements (Images, Text Boxes, etc.) */}
-              {docType === 'plain' && canvasElements.map(el => (
-                <CanvasElement
-                  key={el.id}
-                  element={el}
-                  allElements={canvasElements}
-                  isFreeMode={isFreeMode}
-                  isReadingMode={isReadingMode}
-                  isActive={activeElementId === el.id}
-                  onUpdate={updateCanvasElement}
-                  onSelect={(id) => {
-                    setActiveElementId(id);
-                    if (el.type !== 'text') setActiveCanvasEditor(null);
-                  }}
-                  onDelete={removeElement}
-                  onEditorFocus={(id, ed) => {
-                    setActiveElementId(id);
-                    setActiveCanvasEditor(ed);
-                  }}
-                  onEditorBlur={() => {
-                    // We don't necessarily want to clear the active editor on blur
-                    // as the user might be clicking tools in the capsule.
-                  }}
-                  currentTheme={currentTheme}
-                />
-              ))}
-            </div>
-          </main>
+                  <div 
+                    className="markdown-preview focus:outline-none relative z-10" 
+                    style={{ 
+                      fontSize: `${textSize}%`,
+                      display: isFreeMode && docType === 'plain' ? 'block' : 'block'
+                    }}
+                  >
+                    {(!isFreeMode || docType !== 'plain') && (
+                      <EditorContent editor={editor} />
+                    )}
+                  </div>
+
+                  {/* Canvas Elements (Images, Text Boxes, etc.) */}
+                  {docType === 'plain' && canvasElements.map(el => (
+                    <CanvasElement
+                      key={el.id}
+                      element={el}
+                      allElements={canvasElements}
+                      isFreeMode={isFreeMode}
+                      isReadingMode={isReadingMode}
+                      isActive={activeElementId === el.id}
+                      zoom={zoom}
+                      onUpdate={updateCanvasElement}
+                      onSelect={(id) => {
+                        setActiveElementId(id);
+                        if (el.type !== 'text') setActiveCanvasEditor(null);
+                      }}
+                      onDelete={removeElement}
+                      onEditorFocus={(id, ed) => {
+                        setActiveElementId(id);
+                        setActiveCanvasEditor(ed);
+                      }}
+                      onEditorBlur={() => {}}
+                      currentTheme={currentTheme}
+                    />
+                  ))}
+                </div>
+              </main>
         </div>
         <div className={`flex-1 flex flex-col h-full absolute inset-0 transition-all duration-500 ${activeTab === 'code' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'} ${preferences.paperSlide && activeTab === 'editor' ? 'translate-x-10' : 'translate-x-0'}`}>
           <div className="pt-20 pb-52 h-full flex flex-col px-4 overflow-auto spring-scroll no-scrollbar">
