@@ -192,30 +192,6 @@ const Mathematics = Node.create({
   },
 });
 
-const CustomCaret = Extension.create({
-  name: 'customCaret',
-  addProseMirrorPlugins() {
-    return [
-      new Plugin({
-        key: new PluginKey('custom-caret'),
-        props: {
-          decorations: (state) => {
-            const { selection } = state;
-            if (!selection.empty) return null;
-            
-            return DecorationSet.create(state.doc, [
-              Decoration.widget(selection.from, () => {
-                const span = document.createElement('span');
-                span.className = 'custom-caret-node';
-                return span;
-              }, { side: -1 })
-            ]);
-          },
-        },
-      }),
-    ];
-  },
-});
 
 const FocusBlur = Extension.create({
   name: 'focusBlur',
@@ -321,7 +297,6 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, pre
       TaskItem.configure({ nested: true }),
       Mathematics,
       FocusBlur,
-      CustomCaret,
       Placeholder.configure({
         placeholder: 'Start writing here....',
       }),
@@ -330,7 +305,7 @@ function Editor({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, pre
     contentType: 'markdown',
     autofocus: 'end',
     editorProps: {
-      class: `focus:outline-none min-h-full markdown-preview pb-40 pt-0 ${preferences.focusBlur ? 'focus-blur-active' : ''} custom-caret-active caret-type-${preferences.caretType || 'line'}`,
+      class: `focus:outline-none min-h-full markdown-preview pb-40 pt-0 ${preferences.focusBlur ? 'focus-blur-active' : ''}`,
     },
     onUpdate: ({ editor }) => {
       setMarkdown(editor.getMarkdown());
