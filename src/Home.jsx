@@ -7,6 +7,49 @@ import Onboarding from './Onboarding';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 import db from './db';
+import forestBg from './assets/forest_bg.png';
+import blueBg from './assets/blue_bg.png';
+import orangeBg from './assets/orange_bg.png';
+import redBg from './assets/red_bg.png';
+
+const LavaLamp = ({ currentTheme, globalAccent }) => {
+  if (currentTheme === 'dark') return null;
+  
+  if (globalAccent === '#059669' || globalAccent === '#2563eb' || globalAccent === '#d97706' || globalAccent === '#e11d48') {
+    const isEmerald = globalAccent === '#059669';
+    const isAmber = globalAccent === '#d97706';
+    const isRose = globalAccent === '#e11d48';
+    const isBlue = globalAccent === '#2563eb';
+    const bgImage = isEmerald ? forestBg : (isAmber ? orangeBg : (isRose ? redBg : blueBg));
+    return (
+      <div 
+        className="absolute -inset-x-20 -top-20 bottom-0 z-0 pointer-events-none overflow-hidden"
+        style={{
+          backgroundImage: `url(${bgImage})`,
+          backgroundSize: isEmerald ? '140% auto' : (isRose ? '140% auto' : (isAmber ? '150% auto' : '105% auto')),
+          backgroundPosition: isEmerald ? 'center 15%' : (isAmber ? 'center 70%' : (isRose ? '0% 35%' : 'center 20%')),
+          opacity: 1,
+          maskImage: 'linear-gradient(to bottom, black 0%, black 15%, transparent 70%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 15%, transparent 70%)',
+        }}
+      />
+    );
+  }
+
+  return (
+    <div 
+      className="absolute inset-0 overflow-hidden pointer-events-none opacity-40 mix-blend-multiply"
+      style={{
+        WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 60%, transparent 100%)',
+        maskImage: 'linear-gradient(to bottom, black 0%, black 60%, transparent 100%)'
+      }}
+    >
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full blur-[100px] animate-blob" style={{ backgroundColor: 'var(--accent-color)' }}></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full blur-[120px] animate-blob animation-delay-2000" style={{ backgroundColor: 'var(--accent-color)' }}></div>
+      <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] rounded-full blur-[80px] animate-blob animation-delay-4000" style={{ backgroundColor: 'var(--accent-color)' }}></div>
+    </div>
+  );
+};
 
 const MARKDOWN_GUIDE = `# Markdown Essentials
 
@@ -242,23 +285,6 @@ function Home({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, prefe
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const LavaLamp = () => {
-    if (currentTheme === 'dark') return null;
-    return (
-      <div 
-        className="absolute inset-0 overflow-hidden pointer-events-none opacity-40 mix-blend-multiply"
-        style={{
-          WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 60%, transparent 100%)',
-          maskImage: 'linear-gradient(to bottom, black 0%, black 60%, transparent 100%)'
-        }}
-      >
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full blur-[100px] animate-blob" style={{ backgroundColor: 'var(--accent-color)' }}></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full blur-[120px] animate-blob animation-delay-2000" style={{ backgroundColor: 'var(--accent-color)' }}></div>
-        <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] rounded-full blur-[80px] animate-blob animation-delay-4000" style={{ backgroundColor: 'var(--accent-color)' }}></div>
-      </div>
-    );
-  };
-
   const createRipple = (e) => {
     if (!preferences.inkBleed) return;
     const button = e.currentTarget;
@@ -322,7 +348,7 @@ function Home({ currentTheme, onToggleTheme, globalAccent, onUpdateAccent, prefe
       
       <div className="fixed top-0 left-0 right-0 z-30 pointer-events-none">
         <header className="pt-16 pb-24 px-8 flex flex-col items-start max-w-2xl mx-auto w-full pointer-events-auto relative min-h-[340px]">
-          <LavaLamp />
+          <LavaLamp currentTheme={currentTheme} globalAccent={globalAccent} />
           <div className="relative z-10">
             <h1 className="text-4xl font-serif text-black dark:text-white mb-2 tracking-tight">
               MD-Notes
