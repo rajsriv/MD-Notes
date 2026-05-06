@@ -391,7 +391,7 @@ const CanvasElement = ({
           />
         ) : (
           <div 
-            className="w-full h-full p-3 prose prose-sm dark:prose-invert max-w-none canvas-prose focus:outline-none relative overflow-y-auto no-scrollbar"
+            className={`w-full h-full p-3 prose prose-sm dark:prose-invert max-w-none canvas-prose focus:outline-none relative overflow-y-auto no-scrollbar ${!isEditing ? 'pointer-events-none select-none' : ''}`}
             onPointerDown={(e) => isEditing && e.stopPropagation()}
             style={{ fontSize: 'inherit' }}
           >
