@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Sun, Moon, Palette, Zap, Layers, Eye, Move, BarChart, Droplets, Type } from 'lucide-react';
+import { X, Sun, Moon, Palette, Zap, Layers, Eye, Move, BarChart, Droplets, Type, ChevronRight } from 'lucide-react';
 import db from './db';
 
 const ACCENT_COLORS = [
@@ -85,46 +85,46 @@ function SettingsMenu({
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 pb-12 no-scrollbar">
+      <div className="flex-1 overflow-y-auto px-1 pb-12 no-scrollbar">
         {/* Appearance Section */}
-        <section className="mb-8">
-          <h3 className="text-[11px] font-sans font-semibold text-[#888] uppercase tracking-widest mb-4">Appearance</h3>
+        <section className="mb-8 mt-2">
+          <h3 className="text-[11px] font-sans font-semibold text-[#888] uppercase tracking-widest mb-2 px-5">Appearance</h3>
           
-          <div className="space-y-4">
-            <div className="flex items-center justify-between bg-white dark:bg-[#1a1a1a] p-4 rounded-2xl border border-[#e5e5e0] dark:border-[#333]">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-black/5 dark:bg-white/5 rounded-xl">
-                  {currentTheme === 'light' ? <Sun size={18} /> : <Moon size={18} />}
+          <div className="flex flex-col">
+            <div className="flex items-center justify-between py-5 px-5 border-b border-[#e5e5e0] dark:border-[#333]">
+              <div className="flex items-center gap-4">
+                <div className="text-[#666] dark:text-[#999]">
+                  {currentTheme === 'light' ? <Sun size={20} /> : <Moon size={20} />}
                 </div>
                 <div>
-                  <p className="text-sm font-medium">Theme Mode</p>
-                  <p className="text-[12px] text-[#888]">{currentTheme === 'light' ? 'Light' : 'Dark'} mode active</p>
+                  <p className="text-[16px] font-medium text-black dark:text-[#eee]">Theme Mode</p>
+                  <p className="text-[13px] text-[#888]">{currentTheme === 'light' ? 'Light' : 'Dark'} mode active</p>
                 </div>
               </div>
               <button 
                 onClick={onToggleTheme}
-                className="px-4 py-1.5 bg-black dark:bg-white text-white dark:text-black rounded-full text-xs font-medium active:scale-95 transition-all"
+                className="px-4 py-1.5 bg-black dark:bg-white text-white dark:text-black rounded-full text-xs font-medium active:scale-95 transition-all shadow-sm"
               >
                 Switch
               </button>
             </div>
 
-            <div className="flex flex-col bg-white dark:bg-[#1a1a1a] p-4 rounded-2xl border border-[#e5e5e0] dark:border-[#333]">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-black/5 dark:bg-white/5 rounded-xl text-[var(--accent-color)]">
-                  <Palette size={18} />
+            <div className="flex flex-col py-5 px-5 border-b border-[#e5e5e0] dark:border-[#333]">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="text-[var(--accent-color)]">
+                  <Palette size={20} />
                 </div>
                 <div>
-                  <p className="text-sm font-medium">Accent Color</p>
-                  <p className="text-[12px] text-[#888]">Personalize your workspace</p>
+                  <p className="text-[16px] font-medium text-black dark:text-[#eee]">Accent Color</p>
+                  <p className="text-[13px] text-[#888]">Personalize your workspace</p>
                 </div>
               </div>
-              <div className="flex justify-between px-1">
+              <div className="flex justify-between items-center pr-2">
                 {ACCENT_COLORS.map(color => (
                   <button
                     key={color.name}
                     onClick={() => onUpdateAccent(color.color)}
-                    className={`w-7 h-7 rounded-full border-2 transition-all hover:scale-110 active:scale-90 ${globalAccent === color.color ? 'border-black dark:border-white scale-110' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                    className={`w-8 h-8 rounded-full border-2 transition-all hover:scale-110 active:scale-90 ${globalAccent === color.color ? 'border-black dark:border-white scale-110 shadow-md' : 'border-transparent opacity-60 hover:opacity-100'}`}
                     style={{ backgroundColor: color.color }}
                   />
                 ))}
@@ -133,43 +133,44 @@ function SettingsMenu({
           </div>
         </section>
 
-
         {/* Data & Storage Section */}
         <section className="mb-8">
-          <h3 className="text-[11px] font-sans font-semibold text-[#888] uppercase tracking-widest mb-4">Data & Storage</h3>
+          <h3 className="text-[11px] font-sans font-semibold text-[#888] uppercase tracking-widest mb-2 px-5">Data & Storage</h3>
           
-          <div className="space-y-3">
-            <div className="flex items-center justify-between bg-white dark:bg-[#1a1a1a] p-4 rounded-2xl border border-[#e5e5e0] dark:border-[#333]">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-black/5 dark:bg-white/5 rounded-xl text-[#666] dark:text-[#aaa]">
-                  <BarChart size={18} />
+          <div className="flex flex-col">
+            <div className="flex items-center justify-between py-5 px-5 border-b border-[#e5e5e0] dark:border-[#333]">
+              <div className="flex items-center gap-4">
+                <div className="text-[#666] dark:text-[#999]">
+                  <BarChart size={20} />
                 </div>
                 <div>
-                  <p className="text-sm font-medium">Storage Used</p>
-                  <p className="text-[12px] text-[#888]">{storageSize}</p>
+                  <p className="text-[16px] font-medium text-black dark:text-[#eee]">Storage Used</p>
+                  <p className="text-[13px] text-[#888]">{storageSize}</p>
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="flex items-center justify-between py-5 px-5 border-b border-[#e5e5e0] dark:border-[#333]">
+              <div className="flex items-center gap-4">
+                <div className="text-blue-500">
+                  <Zap size={20} />
+                </div>
+                <p className="text-[16px] font-medium text-black dark:text-[#eee]">Export Backup</p>
+              </div>
               <button 
                 onClick={handleExport}
-                className="flex flex-col items-center justify-center gap-2 p-4 bg-white dark:bg-[#1a1a1a] rounded-2xl border border-[#e5e5e0] dark:border-[#333] hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors"
               >
-                <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl">
-                  <Zap size={18} />
-                </div>
-                <span className="text-xs font-medium">Export Backup</span>
+                <ChevronRight size={20} className="text-[#ccc]" />
               </button>
-              
-              <button 
-                onClick={() => fileInputRef.current.click()}
-                className="flex flex-col items-center justify-center gap-2 p-4 bg-white dark:bg-[#1a1a1a] rounded-2xl border border-[#e5e5e0] dark:border-[#333] hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-              >
-                <div className="p-2 bg-emerald-500/10 text-emerald-500 rounded-xl">
-                  <Layers size={18} />
+            </div>
+
+            <div className="flex items-center justify-between py-5 px-5 border-b border-[#e5e5e0] dark:border-[#333]">
+              <div className="flex items-center gap-4">
+                <div className="text-emerald-500">
+                  <Layers size={20} />
                 </div>
-                <span className="text-xs font-medium">Import Backup</span>
+                <p className="text-[16px] font-medium text-black dark:text-[#eee]">Import Backup</p>
                 <input 
                   type="file" 
                   ref={fileInputRef} 
@@ -177,24 +178,37 @@ function SettingsMenu({
                   accept=".json" 
                   onChange={handleImport}
                 />
+              </div>
+              <button 
+                onClick={() => fileInputRef.current.click()}
+                className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors"
+              >
+                <ChevronRight size={20} className="text-[#ccc]" />
               </button>
             </div>
 
-            <button 
-              onClick={handleReset}
-              className="w-full flex items-center justify-center gap-2 p-4 bg-red-500/10 text-red-500 rounded-2xl border border-red-500/20 hover:bg-red-500/20 transition-colors"
-            >
-              <X size={18} />
-              <span className="text-xs font-semibold">Reset All Data</span>
-            </button>
+            <div className="flex items-center justify-between py-5 px-5 border-b border-[#e5e5e0] dark:border-[#333]">
+              <div className="flex items-center gap-4">
+                <div className="text-red-500">
+                  <X size={20} />
+                </div>
+                <p className="text-[16px] font-medium text-red-500">Reset All Data</p>
+              </div>
+              <button 
+                onClick={handleReset}
+                className="px-4 py-1.5 bg-red-500/10 text-red-500 rounded-full text-xs font-semibold hover:bg-red-500/20 active:scale-95 transition-all"
+              >
+                Clear
+              </button>
+            </div>
           </div>
         </section>
 
         {/* Animations Section */}
         <section>
-          <h3 className="text-[11px] font-sans font-semibold text-[#888] uppercase tracking-widest mb-4">Motion & Experience</h3>
+          <h3 className="text-[11px] font-sans font-semibold text-[#888] uppercase tracking-widest mb-2 px-5">Motion & Experience</h3>
           
-          <div className="space-y-3">
+          <div className="flex flex-col">
             {[
               { id: 'staggeredEntry', label: 'Staggered Entry', icon: <Layers size={18} />, desc: 'Note cards slide in one by one' },
               { id: 'paperSlide', label: 'Paper Slide', icon: <Move size={18} />, desc: 'Smooth horizontal page transitions' },
@@ -203,14 +217,14 @@ function SettingsMenu({
               { id: 'scrollProgress', label: 'Scroll Progress', icon: <BarChart size={18} />, desc: 'Reading progress indicator' },
               { id: 'inkBleed', label: 'Ink Bleed', icon: <Droplets size={18} />, desc: 'Liquid-like button ripples' },
             ].map(item => (
-              <div key={item.id} className="flex items-center justify-between bg-white dark:bg-[#1a1a1a] p-4 rounded-2xl border border-[#e5e5e0] dark:border-[#333]">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-black/5 dark:bg-white/5 rounded-xl text-[#666] dark:text-[#aaa]">
+              <div key={item.id} className="flex items-center justify-between py-5 px-5 border-b border-[#e5e5e0] dark:border-[#333]">
+                <div className="flex items-center gap-4">
+                  <div className="text-[#666] dark:text-[#999]">
                     {item.icon}
                   </div>
                   <div>
-                    <p className="text-sm font-medium">{item.label}</p>
-                    <p className="text-[11px] text-[#888]">{item.desc}</p>
+                    <p className="text-[16px] font-medium text-black dark:text-[#eee]">{item.label}</p>
+                    <p className="text-[13px] text-[#888]">{item.desc}</p>
                   </div>
                 </div>
                 <button 
